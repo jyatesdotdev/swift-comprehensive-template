@@ -1,14 +1,15 @@
 # Swift build artifacts
 .build/
 DerivedData/
+*.dSYM/
+Packages/
 
-# SPM resolved file
-# Uncomment to pin dependency versions in applications (recommended for executables).
-# Libraries should generally not commit Package.resolved.
-# Package.resolved
+# SPM
+.swiftpm/
+Package.resolved
 
-# Xcode user data
-*.xcodeproj/xcuserdata/
+# Xcode
+*.xcodeproj/
 *.xcworkspace/xcuserdata/
 *.pbxuser
 !default.pbxuser
@@ -23,7 +24,6 @@ DerivedData/
 xcuserdata/
 
 # IDE files
-.swiftpm/xcode/
 .vscode/
 *.xcscmblueprint
 
