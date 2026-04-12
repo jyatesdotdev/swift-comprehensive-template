@@ -2,6 +2,14 @@
 
 import PackageDescription
 
+#if os(macOS)
+let swiftTemplatePlugins: [Target.PluginUsage] = [
+    .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+]
+#else
+let swiftTemplatePlugins: [Target.PluginUsage] = []
+#endif
+
 let package = Package(
     name: "SwiftTemplate",
     platforms: [
@@ -28,9 +36,7 @@ let package = Package(
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ],
-            plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
-            ]
+            plugins: swiftTemplatePlugins
         ),
         .executableTarget(
             name: "SwiftTemplateCLI",
