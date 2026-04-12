@@ -256,7 +256,9 @@ public enum StreamIO {
         guard FileManager.default.fileExists(atPath: path) else {
             throw FileSystem.FSError.notFound(path)
         }
-        let handle = FileHandle(forReadingAtPath: path)!
+        guard let handle = FileHandle(forReadingAtPath: path) else {
+            throw FileSystem.FSError.notFound(path)
+        }
         defer { handle.closeFile() }
         while true {
             let chunk = handle.readData(ofLength: chunkSize)
@@ -347,7 +349,7 @@ public enum CFBridging {
         let cf = dict as CFDictionary
         let count = CFDictionaryGetCount(cf)
         _ = count
-        return cf as! [String: Any]
+        return (cf as? [String: Any]) ?? [:]
     }
 
     /// Schedules a one-shot timer on the current run loop via CFRunLoopTimer.
@@ -370,7 +372,7 @@ public enum CFBridging {
             { _, info in
                 guard let info else { return }
                 let fn = Unmanaged<AnyObject>.fromOpaque(info).takeUnretainedValue()
-                (fn as! () -> Void)()
+                (fn as? (() -> Void))?()
             },
             &context
         )

@@ -156,7 +156,7 @@ public struct Particle: Sendable {
     ///
     /// - Parameter force: The force vector to apply.
     public mutating func applyForce(_ force: Vec2) {
-        acceleration = acceleration + force * (1.0 / mass)
+        acceleration = acceleration + force * (1.0 / mass) // swiftlint:disable:this shorthand_operator
     }
 
     /// Advances the particle using Störmer-Verlet integration.
@@ -245,8 +245,8 @@ public struct Spring: Sendable {
         guard dist > .ulpOfOne else { return }
         let diff = (dist - restLength) / dist * 0.5
         let offset = delta * diff
-        particles[a].position = particles[a].position + offset
-        particles[b].position = particles[b].position - offset
+        particles[a].position = particles[a].position + offset // swiftlint:disable:this shorthand_operator
+        particles[b].position = particles[b].position - offset // swiftlint:disable:this shorthand_operator
     }
 }
 

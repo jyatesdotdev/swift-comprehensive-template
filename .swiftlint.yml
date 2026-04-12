@@ -14,7 +14,6 @@ opt_in_rules:
   - force_unwrapping
   - implicitly_unwrapped_optional
   - fatal_error_message
-  - empty_catch
   - discouraged_optional_boolean
   - private_over_fileprivate
 
@@ -35,8 +34,11 @@ implicitly_unwrapped_optional:
 fatal_error_message:
   severity: warning
 
-empty_catch:
-  severity: error
+# Identifier name — allow short idiomatic names (math, graphics, closures)
+identifier_name:
+  min_length: 1
+  excluded:
+    - id
 
 # Standard style rules
 line_length:

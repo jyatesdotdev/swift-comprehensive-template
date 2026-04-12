@@ -211,8 +211,9 @@ public enum ByteOrder {
     /// - Returns: The decoded value, or `nil` if fewer than 4 bytes.
     public static func fromBigEndian(_ bytes: [UInt8]) -> UInt32? {
         guard bytes.count >= 4 else { return nil }
-        return bytes.withUnsafeBufferPointer { buf in
-            buf.baseAddress!.withMemoryRebound(to: UInt32.self, capacity: 1) {
+        return bytes.withUnsafeBufferPointer { buf -> UInt32? in
+            guard let baseAddress = buf.baseAddress else { return nil }
+            return baseAddress.withMemoryRebound(to: UInt32.self, capacity: 1) {
                 UInt32(bigEndian: $0.pointee)
             }
         }

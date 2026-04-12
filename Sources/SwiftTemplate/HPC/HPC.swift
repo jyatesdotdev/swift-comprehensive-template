@@ -115,9 +115,11 @@ public enum AccelerateOps {
         var imag = [Float](repeating: 0, count: n / 2)
         real.withUnsafeMutableBufferPointer { rBuf in
             imag.withUnsafeMutableBufferPointer { iBuf in
-                var split = DSPSplitComplex(realp: rBuf.baseAddress!, imagp: iBuf.baseAddress!)
+                guard let rBase = rBuf.baseAddress, let iBase = iBuf.baseAddress else { return }
+                var split = DSPSplitComplex(realp: rBase, imagp: iBase)
                 signal.withUnsafeBufferPointer { sBuf in
-                    sBuf.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: n / 2) { ptr in
+                    guard let sBase = sBuf.baseAddress else { return }
+                    sBase.withMemoryRebound(to: DSPComplex.self, capacity: n / 2) { ptr in
                         vDSP_ctoz(ptr, 2, &split, 1, vDSP_Length(n / 2))
                     }
                 }

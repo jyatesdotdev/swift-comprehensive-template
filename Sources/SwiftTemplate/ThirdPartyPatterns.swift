@@ -26,7 +26,8 @@ extension URLSession: HTTPClient {
         return try await withCheckedThrowingContinuation { cont in
             dataTask(with: url) { d, r, e in
                 if let e { cont.resume(throwing: e) }
-                else { cont.resume(returning: (d!, r!)) }
+                else if let d, let r { cont.resume(returning: (d, r)) }
+                else { cont.resume(throwing: URLError(.badServerResponse)) }
             }.resume()
         }
         #else
