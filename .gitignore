@@ -1,0 +1,41 @@
+# Swift build artifacts
+.build/
+DerivedData/
+
+# SPM resolved file
+# Uncomment to pin dependency versions in applications (recommended for executables).
+# Libraries should generally not commit Package.resolved.
+# Package.resolved
+
+# Xcode user data
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.xccheckout
+*.moved-aside
+xcuserdata/
+
+# IDE files
+.swiftpm/xcode/
+.vscode/
+*.xcscmblueprint
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage and profiling
+*.profraw
+*.profdata
+codecov/
+
+# Playground data
+timeline.xctimeline
+playground.xcworkspace

@@ -1,0 +1,62 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-scan:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            name: macOS
+          - os: ubuntu-latest
+            name: Linux
+    runs-on: ${{ matrix.os }}
+    name: Security (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift (Linux)
+        if: runner.os == 'Linux'
+        uses: swift-actions/setup-swift@v2
+
+      - name: Install SwiftLint
+        if: runner.os == 'macOS'
+        run: brew install swiftlint
+
+      - name: Install Periphery
+        if: runner.os == 'macOS'
+        run: brew install peripheryapp/periphery/periphery
+
+      - name: Install Trivy
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew install trivy
+          else
+            sudo apt-get install -y wget apt-transport-https gnupg
+            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+            echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+            sudo apt-get update && sudo apt-get install -y trivy
+          fi
+
+      - name: Install swift-package-audit
+        run: |
+          if command -v npm &>/dev/null; then
+            npm install -g swift-package-audit
+          else
+            echo "npm not available — skipping swift-package-audit"
+          fi
+
+      - name: Build
+        run: swift build
+
+      - name: Run security scan
+        run: ./scripts/security-scan.sh

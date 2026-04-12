@@ -1,0 +1,41 @@
+# Build artifacts
+.build/
+DerivedData/
+
+# Git
+.git/
+.gitignore
+
+# Documentation and non-build files
+docs/
+examples/
+scripts/
+*.md
+Makefile
+LICENSE
+
+# IDE and editor files
+.swiftpm/
+.vscode/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+# CI/CD
+.github/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage and profiling
+*.profraw
+*.profdata
+codecov/
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Linting config
+.swiftlint.yml
