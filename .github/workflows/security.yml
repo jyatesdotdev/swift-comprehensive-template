@@ -12,40 +12,19 @@ concurrency:
 
 jobs:
   security-scan:
-    strategy:
-      matrix:
-        include:
-          - os: macos-14
-            name: macOS
-          - os: ubuntu-latest
-            name: Linux
-    runs-on: ${{ matrix.os }}
-    name: Security (${{ matrix.name }})
+    runs-on: macos-14
+    name: Security Scan
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Swift (Linux)
-        if: runner.os == 'Linux'
-        uses: swift-actions/setup-swift@v2
-
       - name: Install SwiftLint
-        if: runner.os == 'macOS'
         run: brew install swiftlint
 
       - name: Install Periphery
-        if: runner.os == 'macOS'
         run: brew install peripheryapp/periphery/periphery
 
       - name: Install Trivy
-        run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install trivy
-          else
-            sudo apt-get install -y wget apt-transport-https gnupg
-            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
-            echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
-            sudo apt-get update && sudo apt-get install -y trivy
-          fi
+        run: brew install trivy
 
       - name: Audit dependencies
         run: swift package audit 2>/dev/null || echo "swift package audit not available — skipping"
