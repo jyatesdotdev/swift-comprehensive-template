@@ -47,16 +47,24 @@ run_swiftlint() {
     fi
 }
 
-# --- swift-package-audit ---
+# --- swift package audit ---
 run_audit() {
-    separator "swift-package-audit (dependency vulnerabilities)"
-    if ! has_tool swift-package-audit; then return; fi
-    if swift-package-audit 2>&1; then
-        echo "✅ Dependency audit passed"
-    else
+    separator "swift package audit (dependency vulnerabilities)"
+    if ! has_tool swift; then return; fi
+    local output
+    if ! output=$(swift package audit 2>&1); then
+        if echo "$output" | grep -q "Unknown subcommand"; then
+            echo "⚠️  swift package audit not supported (requires Swift 6.1+) — skipping"
+            SKIPPED=$((SKIPPED + 1))
+            return
+        fi
+        echo "$output"
         echo "❌ Dependency audit found vulnerabilities"
         FAILURES=$((FAILURES + 1))
+        return
     fi
+    echo "$output"
+    echo "✅ Dependency audit passed"
 }
 
 # --- xcodebuild analyze (macOS only) ---

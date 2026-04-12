@@ -47,13 +47,9 @@ jobs:
             sudo apt-get update && sudo apt-get install -y trivy
           fi
 
-      - name: Install swift-package-audit
-        run: |
-          if command -v npm &>/dev/null; then
-            npm install -g swift-package-audit
-          else
-            echo "npm not available — skipping swift-package-audit"
-          fi
+      - name: Audit dependencies
+        run: swift package audit || true
+        continue-on-error: true
 
       - name: Build
         run: swift build
