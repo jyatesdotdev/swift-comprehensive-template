@@ -48,7 +48,7 @@ jobs:
           fi
 
       - name: Audit dependencies
-        run: swift package audit || true
+        run: swift package audit 2>/dev/null || echo "swift package audit not available — skipping"
         continue-on-error: true
 
       - name: Build

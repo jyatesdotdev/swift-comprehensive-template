@@ -110,8 +110,8 @@ public struct Config: Sendable {
     /// - Parameter key: The configuration key to look up.
     /// - Returns: The string value associated with `key`.
     /// - Throws: ``ConfigError/missingKey(_:)`` if the key is absent.
-    public func require(_ key: String) throws(ConfigError) -> String {
-        guard let value = values[key] else { throw .missingKey(key) }
+    public func require(_ key: String) throws -> String {
+        guard let value = values[key] else { throw ConfigError.missingKey(key) }
         return value
     }
 
@@ -120,9 +120,9 @@ public struct Config: Sendable {
     /// - Parameter key: The configuration key to look up.
     /// - Returns: The integer value associated with `key`.
     /// - Throws: ``ConfigError/missingKey(_:)`` or ``ConfigError/typeMismatch(key:expected:)``.
-    public func requireInt(_ key: String) throws(ConfigError) -> Int {
+    public func requireInt(_ key: String) throws -> Int {
         let raw = try require(key)
-        guard let value = Int(raw) else { throw .typeMismatch(key: key, expected: "Int") }
+        guard let value = Int(raw) else { throw ConfigError.typeMismatch(key: key, expected: "Int") }
         return value
     }
 }
