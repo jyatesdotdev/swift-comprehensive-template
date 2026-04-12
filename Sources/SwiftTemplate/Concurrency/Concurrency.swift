@@ -2,6 +2,9 @@
 // GCD, async/await, actors, structured concurrency, TaskGroups
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 // MARK: - 1. Grand Central Dispatch (GCD)
 

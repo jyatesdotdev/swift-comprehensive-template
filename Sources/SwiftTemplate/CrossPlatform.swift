@@ -2,6 +2,9 @@
 // Conditional compilation, platform abstraction, portable APIs
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 #if canImport(os)
 import os
