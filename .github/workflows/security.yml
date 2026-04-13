@@ -33,5 +33,25 @@ jobs:
       - name: Build
         run: swift build
 
+      - name: Run tests with coverage
+        run: swift test --enable-code-coverage
+
+      - name: Check coverage threshold
+        run: |
+          BIN_PATH=$(swift build --show-bin-path)
+          XCTEST_BUNDLE=$(find "$BIN_PATH" -name "*.xctest" -type d | head -1)
+          COV_DATA=$(find .build -name "default.profdata" | head -1)
+          if [ -z "$XCTEST_BUNDLE" ] || [ -z "$COV_DATA" ]; then
+            echo "::warning::Could not find coverage data"
+            exit 0
+          fi
+          XCTEST_BIN="$XCTEST_BUNDLE/Contents/MacOS/$(basename "$XCTEST_BUNDLE" .xctest)"
+          COVERAGE=$(xcrun llvm-cov report "$XCTEST_BIN" -instr-profile="$COV_DATA" -ignore-filename-regex='Tests/|.build/' | grep "TOTAL" | awk '{print $NF}' | tr -d '%')
+          echo "Total coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 80.0" | bc -l) )); then
+            echo "::error::Coverage ${COVERAGE}% is below 80% threshold"
+            exit 1
+          fi
+
       - name: Run security scan
         run: ./scripts/security-scan.sh

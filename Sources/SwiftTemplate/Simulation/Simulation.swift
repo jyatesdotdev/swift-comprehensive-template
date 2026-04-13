@@ -35,6 +35,7 @@ public struct Vec2: Sendable, Equatable {
     public static func - (a: Vec2, b: Vec2) -> Vec2 { Vec2(a.x - b.x, a.y - b.y) }
     public static func * (a: Vec2, s: Double) -> Vec2 { Vec2(a.x * s, a.y * s) }
     public static func * (s: Double, a: Vec2) -> Vec2 { a * s }
+    public static func += (a: inout Vec2, b: Vec2) { a = a + b }
 }
 
 /// Generic ODE state for numerical integration.
