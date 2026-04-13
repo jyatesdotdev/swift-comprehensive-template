@@ -191,4 +191,3 @@ struct CoreAnimationTests {
     }
 }
 #endif
-
