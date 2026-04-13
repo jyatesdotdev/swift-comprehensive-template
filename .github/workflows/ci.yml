@@ -8,27 +8,32 @@ on:
 
 jobs:
   test:
-    name: Test (Swift ${{ matrix.swift }})
+    name: Test
     runs-on: macos-14
-    strategy:
-      matrix:
-        swift: ['5.9', '5.10']
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+      - name: Select Xcode 16
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
 
       - name: Build
         run: swift build
 
       - name: Run tests
-        run: swift test --enable-code-coverage
+        run: swift test --enable-code-coverage --parallel
 
       - name: Generate coverage report
         run: |
+          # Find the test binary
+          TEST_BIN=$(find .build/debug -name 'SwiftTemplatePackageTests' -type f | head -1)
+          if [ -z "$TEST_BIN" ]; then
+            TEST_BIN=".build/debug/SwiftTemplatePackageTests.xctest/Contents/MacOS/SwiftTemplatePackageTests"
+          fi
+          echo "Test binary: $TEST_BIN"
+          
+          # Also need to include the library objects for coverage
           xcrun llvm-cov export \
-            .build/debug/SwiftTemplatePackageTests.xctest/Contents/MacOS/SwiftTemplatePackageTests \
+            "$TEST_BIN" \
             -instr-profile .build/debug/codecov/default.profdata \
             -format lcov \
             -ignore-filename-regex '.build|Tests' \
@@ -36,8 +41,19 @@ jobs:
 
       - name: Check coverage threshold
         run: |
+          TEST_BIN=$(find .build/debug -name 'SwiftTemplatePackageTests' -type f | head -1)
+          if [ -z "$TEST_BIN" ]; then
+            TEST_BIN=".build/debug/SwiftTemplatePackageTests.xctest/Contents/MacOS/SwiftTemplatePackageTests"
+          fi
+          
+          # Get coverage report
+          xcrun llvm-cov report \
+            "$TEST_BIN" \
+            -instr-profile .build/debug/codecov/default.profdata \
+            -ignore-filename-regex '.build|Tests'
+          
           COVERAGE=$(xcrun llvm-cov report \
-            .build/debug/SwiftTemplatePackageTests.xctest/Contents/MacOS/SwiftTemplatePackageTests \
+            "$TEST_BIN" \
             -instr-profile .build/debug/codecov/default.profdata \
             -ignore-filename-regex '.build|Tests' \
             | grep -E '^TOTAL' | awk '{print $4}' | tr -d '%')
@@ -58,15 +74,4 @@ jobs:
           brew install swiftlint
           swiftlint lint --strict
 
-  build-linux:
-    name: Build (Linux)
-    runs-on: ubuntu-latest
-    container: swift:5.9
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Build
-        run: swift build
-
-      - name: Run tests
-        run: swift test

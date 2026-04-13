@@ -108,8 +108,30 @@ import XCTest
 @testable import SwiftTemplate
 
 final class SimulationXCTests: XCTestCase {
-    func testVec2() { XCTAssertEqual(Vec2(3, 4) + Vec2(1, 2), Vec2(4, 6)) }
-    func testVec2Length() { XCTAssertEqual(Vec2(3, 4).length, 5.0, accuracy: 1e-12) }
+    func testVec2Arithmetic() {
+        let a = Vec2(3, 4), b = Vec2(1, 2)
+        XCTAssertEqual(a + b, Vec2(4, 6))
+        XCTAssertEqual(a - b, Vec2(2, 2))
+        XCTAssertEqual(a * 2.0, Vec2(6, 8))
+        XCTAssertEqual(2.0 * a, Vec2(6, 8))
+    }
+    func testVec2Length() {
+        XCTAssertEqual(Vec2(3, 4).length, 5.0, accuracy: 1e-12)
+        XCTAssertEqual(Vec2.zero.length, 0.0)
+    }
+    func testVec2Normalized() {
+        let n = Vec2(3, 4).normalized
+        XCTAssertEqual(n.length, 1.0, accuracy: 1e-12)
+        XCTAssertEqual(Vec2.zero.normalized, .zero)
+    }
+    func testVec2PlusEquals() {
+        var v = Vec2(1, 2); v += Vec2(3, 4)
+        XCTAssertEqual(v, Vec2(4, 6))
+    }
+    func testEuler() {
+        let r = Integrator.euler(state: 0.0, t: 0, dt: 1.0) { _, _ in 2.0 }
+        XCTAssertEqual(r, 2.0, accuracy: 1e-12)
+    }
     func testRK4() {
         var y = 1.0; let dt = 0.01
         for i in 0..<100 { y = Integrator.rk4(state: y, t: Double(i)*dt, dt: dt) { _, s in s } }
@@ -122,7 +144,29 @@ final class SimulationXCTests: XCTestCase {
     func testAABB() {
         let a = AABB(center: Vec2(0, 0), halfSize: Vec2(1, 1))
         let b = AABB(center: Vec2(1.5, 0), halfSize: Vec2(1, 1))
+        let c = AABB(center: Vec2(3, 0), halfSize: Vec2(1, 1))
         XCTAssertTrue(a.overlaps(b))
+        XCTAssertFalse(a.overlaps(c))
+    }
+    func testParticle() {
+        var p = Particle(position: Vec2(0, 0), mass: 2.0)
+        p.applyForce(Vec2(10, 0))
+        XCTAssertEqual(p.acceleration.x, 5.0)
+        p.integrate(dt: 1.0/60.0)
+        XCTAssertGreaterThan(p.position.x, 0)
+    }
+    func testSpring() {
+        var particles = [Particle(position: Vec2(0, 0)), Particle(position: Vec2(3, 0))]
+        let spring = Spring(a: 0, b: 1, restLength: 2.0)
+        for _ in 0..<100 { spring.apply(to: &particles) }
+        let dist = (particles[1].position - particles[0].position).length
+        XCTAssertEqual(dist, 2.0, accuracy: 1e-6)
+    }
+    func testParticleSystem() {
+        var system = ParticleSystem(gravity: Vec2(0, -10), groundY: 0)
+        system.addParticle(Particle(position: Vec2(0, 5)))
+        for _ in 0..<600 { system.step(dt: 1.0/60.0) }
+        XCTAssertGreaterThanOrEqual(system.particles[0].position.y, 0.0)
     }
 }
 #endif
