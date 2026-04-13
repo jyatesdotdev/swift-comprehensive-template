@@ -18,7 +18,7 @@ struct SwiftTemplateCLI: AsyncParsableCommand {
             ConfigCommand.self,
             PipeCommand.self,
             FormatCommand.self,
-            PlatformCommand.self,
+            PlatformCommand.self
         ]
     )
 }

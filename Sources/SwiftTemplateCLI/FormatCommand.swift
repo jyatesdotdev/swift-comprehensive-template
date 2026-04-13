@@ -43,7 +43,9 @@ struct TableFormatter {
 
         var lines: [String] = []
         // Header
-        let header = headers.enumerated().map { i, h in h.padding(toLength: widths[i], withPad: " ", startingAt: 0) }.joined(separator: "  ")
+        let header = headers.enumerated().map { i, h in
+            h.padding(toLength: widths[i], withPad: " ", startingAt: 0)
+        }.joined(separator: "  ")
         lines.append(color ? ANSIStyle.bold.apply(header) : header)
         // Separator
         lines.append(widths.map { String(repeating: "─", count: $0) }.joined(separator: "──"))
@@ -86,7 +88,7 @@ extension FormatCommand {
             table.rows = [
                 ["swift-argument-parser", "Swift", "3.4k"],
                 ["Vapor", "Swift", "24.5k"],
-                ["swift-nio", "Swift", "7.9k"],
+                ["swift-nio", "Swift", "7.9k"]
             ]
             print(table.render(color: useColor))
         }
@@ -109,7 +111,7 @@ extension FormatCommand {
             }
             let styles: [(String, ANSIStyle)] = [
                 ("Bold", .bold), ("Dim", .dim), ("Red", .red),
-                ("Green", .green), ("Yellow", .yellow), ("Blue", .blue), ("Cyan", .cyan),
+                ("Green", .green), ("Yellow", .yellow), ("Blue", .blue), ("Cyan", .cyan)
             ]
             for (label, style) in styles {
                 print(style.apply(label))

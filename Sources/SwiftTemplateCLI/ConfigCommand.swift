@@ -19,7 +19,7 @@ struct ConfigCommand: ParsableCommand {
 
     struct AppConfig: Codable {
         var name: String?
-        var verbose: Bool?
+        var verbose: Bool? // swiftlint:disable:this discouraged_optional_boolean
         var logLevel: String?
     }
 

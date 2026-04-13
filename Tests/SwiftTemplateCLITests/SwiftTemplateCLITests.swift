@@ -83,7 +83,7 @@ struct ConfigCommandTests {
 
     @Test func configDecoding() throws {
         let json = #"{"name":"TestApp","verbose":true,"logLevel":"warn"}"#
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let config = try JSONDecoder().decode(ConfigCommand.AppConfig.self, from: data)
         #expect(config.name == "TestApp")
         #expect(config.verbose == true)

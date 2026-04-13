@@ -131,13 +131,13 @@ struct SimulationTests {
 struct HPCTests {
 
     @Test func simdMultiplyAdd() {
-        let r = SIMDOps.multiplyAdd([1,2,3,4], [2,2,2,2], [10,10,10,10])
+        let r = SIMDOps.multiplyAdd([1, 2, 3, 4], [2, 2, 2, 2], [10, 10, 10, 10])
         #expect(r == SIMD4<Float>(12, 14, 16, 18))
     }
 
     @Test func simdDot() {
-        let a: SIMD8<Float> = [1,0,0,0,0,0,0,0]
-        let b: SIMD8<Float> = [5,3,0,0,0,0,0,0]
+        let a: SIMD8<Float> = [1, 0, 0, 0, 0, 0, 0, 0]
+        let b: SIMD8<Float> = [5, 3, 0, 0, 0, 0, 0, 0]
         #expect(SIMDOps.dot(a, b) == 5.0)
     }
 
@@ -226,7 +226,7 @@ struct PerformancePatternTests {
         let clock = ContinuousClock()
         let elapsed = clock.measure {
             var v = Vec2(1, 1)
-            for _ in 0..<100_000 { v = v + Vec2(0.001, 0.001) }
+            for _ in 0..<100_000 { v += Vec2(0.001, 0.001) }
             _ = v
         }
         // Sanity: should complete in well under 1 second
@@ -282,14 +282,14 @@ final class SimulationTests: XCTestCase {
         XCTAssertEqual(r, 1.0/3.0, accuracy: 1e-6)
     }
     func testAABB() {
-        let a = AABB(center: Vec2(0,0), halfSize: Vec2(1,1))
-        let b = AABB(center: Vec2(1.5,0), halfSize: Vec2(1,1))
+        let a = AABB(center: Vec2(0, 0), halfSize: Vec2(1, 1))
+        let b = AABB(center: Vec2(1.5, 0), halfSize: Vec2(1, 1))
         XCTAssertTrue(a.overlaps(b))
     }
 }
 
 final class HPCTests: XCTestCase {
-    func testBatchDot() { XCTAssertEqual(SIMDOps.batchDot([1,2,3,4,5], [2,2,2,2,2]), 30.0) }
+    func testBatchDot() { XCTAssertEqual(SIMDOps.batchDot([1, 2, 3, 4, 5], [2, 2, 2, 2, 2]), 30.0) }
     func testConcurrentMap() {
         let r = ParallelProcessing.concurrentMap(Array(0..<50)) { $0 * 2 }
         XCTAssertEqual(r, (0..<50).map { $0 * 2 })
@@ -301,7 +301,7 @@ final class ConcurrencyTests: XCTestCase {
         let c = Counter(0); let v = await c.increment(by: 5); XCTAssertEqual(v, 5)
     }
     func testParallelMap() async throws {
-        let r = try await StructuredConcurrency.parallelMap([1,2,3]) { $0 * $0 }
+        let r = try await StructuredConcurrency.parallelMap([1, 2, 3]) { $0 * $0 }
         XCTAssertEqual(r, [1, 4, 9])
     }
 }
@@ -309,7 +309,7 @@ final class ConcurrencyTests: XCTestCase {
 final class PerformanceTests: XCTestCase {
     func testVec2Performance() {
         measure {
-            var v = Vec2(1,1); for _ in 0..<100_000 { v = v + Vec2(0.001, 0.001) }; _ = v
+            var v = Vec2(1, 1); for _ in 0..<100_000 { v += Vec2(0.001, 0.001) }; _ = v
         }
     }
     func testBatchDotPerformance() {

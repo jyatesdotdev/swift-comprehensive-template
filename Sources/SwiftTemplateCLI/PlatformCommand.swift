@@ -111,7 +111,8 @@ extension PlatformCommand {
             // Read /etc/os-release for distro info
             if let release = try? String(contentsOfFile: "/etc/os-release", encoding: .utf8),
                let pretty = release.split(separator: "\n").first(where: { $0.hasPrefix("PRETTY_NAME=") }) {
-                let name = pretty.dropFirst("PRETTY_NAME=".count).trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                let name = pretty.dropFirst("PRETTY_NAME=".count)
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
                 print("Distro:   \(name)")
             }
             #endif

@@ -9,6 +9,9 @@ excluded:
   - .build
   - Package.swift
 
+disabled_rules:
+  - optional_data_string_conversion
+
 # Opt-in rules not enabled by default
 opt_in_rules:
   - force_unwrapping

@@ -1,7 +1,7 @@
-/// Best Practices — Compilable examples of Swift idioms.
-///
-/// Demonstrates protocol-oriented design, value types with copy-on-write,
-/// typed error handling, and property wrappers.
+// Best Practices — Compilable examples of Swift idioms.
+//
+// Demonstrates protocol-oriented design, value types with copy-on-write,
+// typed error handling, and property wrappers.
 
 // MARK: - Protocol-Oriented Design
 

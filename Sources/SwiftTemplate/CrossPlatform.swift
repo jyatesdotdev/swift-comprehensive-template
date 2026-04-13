@@ -16,12 +16,12 @@ import os
 public enum Platform {
 
     /// Compile-time platform identifier.
-    public enum OS: String, Sendable {
+    public enum OSType: String, Sendable {
         case macOS, iOS, tvOS, watchOS, visionOS, linux, windows, unknown
     }
 
     /// The OS this binary was compiled for.
-    public static var current: OS {
+    public static var current: OSType {
         #if os(macOS)
         return .macOS
         #elseif os(iOS)
@@ -228,7 +228,7 @@ public enum ByteOrder {
 /// Demonstrates `@available` deprecation and conditional compilation patterns.
 public enum CompileDiagnostics {
 
-    // #warning("TODO: implement caching layer")       // flags unfinished work
+    // #warning("implement caching layer")       // flags unfinished work
     // #error("Unsupported platform")                  // blocks unsupported targets
 
     @available(*, deprecated, message: "Use PortableHTTP.get instead")

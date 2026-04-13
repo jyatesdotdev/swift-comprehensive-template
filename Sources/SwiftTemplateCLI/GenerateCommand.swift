@@ -45,14 +45,15 @@ extension GenerateCommand {
             abstract: "Generate a random password."
         )
 
-        enum Charset: String, ExpressibleByArgument, CaseIterable {
+        enum Charset: String, ExpressibleByArgument, CaseIterable { // swiftlint:disable:this nesting
             case alphanumeric, ascii, numeric
         }
 
         @Option(name: .shortAndLong, help: "Password length (8–256).")
         var length: Int = 16
 
-        @Option(name: .shortAndLong, help: "Character set: \(Charset.allCases.map(\.rawValue).joined(separator: ", ")).")
+        @Option(name: .shortAndLong,
+                help: "Character set: \(Charset.allCases.map(\.rawValue).joined(separator: ", ")).")
         var charset: Charset = .alphanumeric
 
         func validate() throws {
@@ -69,10 +70,13 @@ extension GenerateCommand {
                 case .alphanumeric:
                     return Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
                 case .ascii:
-                    return Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?")
+                    return Array(
+                        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?"
+                    )
                 }
             }()
-            let password = String((0..<length).map { _ in chars.randomElement()! })
+            guard let sample = chars.randomElement() else { return }
+            let password = String((0..<length).map { _ in chars.randomElement() ?? sample })
             print(password)
         }
     }
