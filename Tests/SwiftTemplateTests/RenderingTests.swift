@@ -1,4 +1,3 @@
-#if canImport(Testing)
 import Testing
 import Foundation
 @testable import SwiftTemplate
@@ -193,4 +192,3 @@ struct CoreAnimationTests {
 }
 #endif
 
-#endif

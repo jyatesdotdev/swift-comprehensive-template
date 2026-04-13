@@ -1,4 +1,3 @@
-#if canImport(Testing)
 import Testing
 import Foundation
 @testable import SwiftTemplate
@@ -73,4 +72,3 @@ struct CrossPlatformTests {
         #expect(e2 is Error)
     }
 }
-#endif

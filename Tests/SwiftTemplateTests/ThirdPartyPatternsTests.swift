@@ -1,4 +1,3 @@
-#if canImport(Testing)
 import Testing
 import Foundation
 @testable import SwiftTemplate
@@ -44,4 +43,3 @@ struct ThirdPartyPatternsTests {
         #expect(dict?["key"] as? String == "value")
     }
 }
-#endif

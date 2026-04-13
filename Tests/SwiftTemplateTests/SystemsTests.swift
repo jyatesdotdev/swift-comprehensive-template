@@ -1,4 +1,3 @@
-#if canImport(Testing)
 import Testing
 import Foundation
 @testable import SwiftTemplate
@@ -175,4 +174,3 @@ struct SystemsTests {
         Signals.restore(SIGUSR1)
     }
 }
-#endif

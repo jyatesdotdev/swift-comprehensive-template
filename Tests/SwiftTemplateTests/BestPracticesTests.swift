@@ -1,4 +1,3 @@
-#if canImport(Testing)
 import Testing
 import Foundation
 @testable import SwiftTemplate
@@ -98,26 +97,3 @@ struct BestPracticesExtendedTests {
 @Test func version() {
     #expect(SwiftTemplate.version == "0.1.0")
 }
-
-#elseif canImport(XCTest)
-import XCTest
-@testable import SwiftTemplate
-
-final class BestPracticesXCTests: XCTestCase {
-    func testPoint2D() { XCTAssertEqual(Point2D(x: 1, y: 2), Point2D(x: 1, y: 2)) }
-    func testCOWBuffer() {
-        var a = COWBuffer([1, 2, 3]); var b = a; b[0] = 99
-        XCTAssertEqual(a[0], 1); XCTAssertEqual(b[0], 99)
-    }
-    func testConfig() throws {
-        let c = Config(["k": "v"]); XCTAssertEqual(try c.require("k"), "v")
-    }
-    func testClamped() {
-        var s = AudioSettings(); s.volume = 1.5; XCTAssertEqual(s.volume, 1.0)
-    }
-}
-
-final class SmokeTests: XCTestCase {
-    func testVersion() { XCTAssertEqual(SwiftTemplate.version, "0.1.0") }
-}
-#endif

@@ -1,4 +1,3 @@
-#if canImport(Testing)
 import Testing
 import Foundation
 @testable import SwiftTemplate
@@ -108,42 +107,3 @@ struct HPCExtendedTests {
         #expect(r == 6)
     }
 }
-
-#elseif canImport(XCTest)
-import XCTest
-@testable import SwiftTemplate
-
-final class HPCXCTests: XCTestCase {
-    func testBatchDot() { XCTAssertEqual(SIMDOps.batchDot([1, 2, 3, 4, 5], [2, 2, 2, 2, 2]), 30.0) }
-    func testBatchDotEmpty() { XCTAssertEqual(SIMDOps.batchDot([], []), 0.0) }
-    func testBatchDotMismatch() { XCTAssertEqual(SIMDOps.batchDot([1, 2], [1]), 0.0) }
-    func testBatchSum() { XCTAssertEqual(SIMDOps.batchSum([1, 2, 3, 4, 5]), 15.0) }
-    func testBatchSumEmpty() { XCTAssertEqual(SIMDOps.batchSum([]), 0.0) }
-    func testConcurrentMap() {
-        let r = ParallelProcessing.concurrentMap(Array(0..<50)) { $0 * 2 }
-        XCTAssertEqual(r, (0..<50).map { $0 * 2 })
-    }
-    func testConcurrentMapEmpty() {
-        let r = ParallelProcessing.concurrentMap([Int]()) { $0 }
-        XCTAssertTrue(r.isEmpty)
-    }
-    func testConcurrentReduce() {
-        let r = ParallelProcessing.concurrentReduce([1, 2, 3], initial: 0, chunkSize: 1024) { $0 + $1 }
-        XCTAssertEqual(r, 6)
-    }
-    func testMatmul() {
-        let a: [Float] = [1, 0, 0, 1], b: [Float] = [1, 2, 3, 4]
-        let c = AccelerateOps.matmul(a: a, b: b, m: 2, n: 2, k: 2)
-        XCTAssertEqual(c, [1, 2, 3, 4])
-    }
-    func testMeasure() {
-        let r = MemoryOptimization.measure("") { 42 }
-        XCTAssertEqual(r, 42)
-    }
-    func testAlignedBuffer() {
-        let buf = MemoryOptimization.AlignedBuffer<Int>(count: 3)
-        buf[0] = 10; buf[1] = 20; buf[2] = 30
-        XCTAssertEqual(Array(buf.buffer), [10, 20, 30])
-    }
-}
-#endif

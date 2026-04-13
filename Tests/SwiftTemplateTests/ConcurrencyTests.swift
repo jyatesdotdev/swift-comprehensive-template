@@ -1,4 +1,3 @@
-#if canImport(Testing)
 import Testing
 import Foundation
 @testable import SwiftTemplate
@@ -119,30 +118,3 @@ struct PerformancePatternTests {
         #expect(elapsed < .seconds(1))
     }
 }
-
-#elseif canImport(XCTest)
-import XCTest
-@testable import SwiftTemplate
-
-final class ConcurrencyXCTests: XCTestCase {
-    func testCounter() async {
-        let c = Counter(0); let v = await c.increment(by: 5); XCTAssertEqual(v, 5)
-    }
-    func testParallelMap() async throws {
-        let r = try await StructuredConcurrency.parallelMap([1, 2, 3]) { $0 * $0 }
-        XCTAssertEqual(r, [1, 4, 9])
-    }
-}
-
-final class PerformanceXCTests: XCTestCase {
-    func testVec2Performance() {
-        measure {
-            var v = Vec2(1, 1); for _ in 0..<100_000 { v += Vec2(0.001, 0.001) }; _ = v
-        }
-    }
-    func testBatchDotPerformance() {
-        let a = [Float](repeating: 1, count: 10_000), b = [Float](repeating: 2, count: 10_000)
-        measure { _ = SIMDOps.batchDot(a, b) }
-    }
-}
-#endif
