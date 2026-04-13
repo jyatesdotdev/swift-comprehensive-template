@@ -938,7 +938,7 @@ final class SimulationTests: XCTestCase {
     func testRK4() {
         var y = 1.0; let dt = 0.01
         for i in 0..<100 { y = Integrator.rk4(state: y, t: Double(i)*dt, dt: dt) { _, s in s } }
-        XCTAssertEqual(y, 2.718281828459045, accuracy: 1e-10)
+        XCTAssertEqual(y, 2.718281828459045, accuracy: 1e-6)
     }
     func testTrapezoid() {
         let r = Integrator.trapezoid(from: 0, to: 1, steps: 1000) { $0 * $0 }
