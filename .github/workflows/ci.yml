@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (Swift ${{ matrix.swift }})
+    runs-on: macos-14
+    strategy:
+      matrix:
+        swift: ['5.9', '5.10']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Build
+        run: swift build
+
+      - name: Run tests
+        run: swift test --enable-code-coverage
+
+      - name: Generate coverage report
+        run: |
+          xcrun llvm-cov export \
+            .build/debug/SwiftTemplatePackageTests.xctest/Contents/MacOS/SwiftTemplatePackageTests \
+            -instr-profile .build/debug/codecov/default.profdata \
+            -format lcov \
+            -ignore-filename-regex '.build|Tests' \
+            > coverage.lcov
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(xcrun llvm-cov report \
+            .build/debug/SwiftTemplatePackageTests.xctest/Contents/MacOS/SwiftTemplatePackageTests \
+            -instr-profile .build/debug/codecov/default.profdata \
+            -ignore-filename-regex '.build|Tests' \
+            | grep -E '^TOTAL' | awk '{print $4}' | tr -d '%')
+          echo "Coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 80.0" | bc -l) )); then
+            echo "::error::Coverage ${COVERAGE}% is below 80% threshold"
+            exit 1
+          fi
+
+  lint:
+    name: SwiftLint
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run SwiftLint
+        run: |
+          brew install swiftlint
+          swiftlint lint --strict
+
+  build-linux:
+    name: Build (Linux)
+    runs-on: ubuntu-latest
+    container: swift:5.9
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build
+
+      - name: Run tests
+        run: swift test
