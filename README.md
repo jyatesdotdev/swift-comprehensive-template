@@ -4,8 +4,7 @@ A cross-platform Swift project template demonstrating modern Swift capabilities 
 
 ## Requirements
 
-- Swift 5.9+
-- Xcode 15+ (for Apple platforms)
+- Swift 5.9+ to build; Xcode 16.2+ / Swift 6 toolchain to run the tests (Swift Testing)
 - macOS 14+ / iOS 17+ / Linux (Ubuntu 22.04+)
 
 ## Project Structure
@@ -21,11 +20,16 @@ SwiftTemplate/
 │   │   ├── Systems/               # Foundation, Core Foundation, file I/O, processes
 │   │   ├── HPC/                   # SIMD, Accelerate, parallel processing
 │   │   └── Simulation/            # Numerical computing, physics, Core Animation
+│   ├── SwiftTemplateUI/           # SwiftUI building blocks (MVVM, components, game canvas, Metal)
+│   ├── SwiftTemplateCLI/          # ArgumentParser CLI with subcommands
+│   ├── SwiftTemplateUIDemo/       # macOS demo app for the UI target
 │   └── SwiftTemplateExample/      # Executable demonstrating library usage
 ├── Tests/
-│   └── SwiftTemplateTests/        # XCTest: unit, performance, and integration tests
-├── docs/                           # DocC documentation and guides
-└── examples/                       # Standalone example files
+│   ├── SwiftTemplateTests/        # Swift Testing: unit, async, and integration tests
+│   ├── SwiftTemplateCLITests/     # Swift Testing: CLI parsing and validation tests
+│   └── SwiftTemplateUITests/      # Swift Testing: view models, LoadState, pixel bridge
+├── docs/                           # Markdown guides and DocC documentation
+└── examples/                       # Reserved for standalone examples (currently empty)
 ```
 
 ## Building
@@ -39,6 +43,9 @@ swift build -c release
 
 # Run the example
 swift run SwiftTemplateExample
+
+# Launch the macOS UI demo (Components / Game / Metal tabs)
+swift run SwiftTemplateUIDemo
 
 # Run tests
 swift test
@@ -56,6 +63,7 @@ swift test --verbose
 | **Systems** | File I/O, process management, memory management, system interfaces |
 | **HPC** | SIMD operations, Accelerate framework, parallel algorithms |
 | **Simulation** | Numerical integration, physics engines, Core Animation |
+| **UI** (`SwiftTemplateUI`) | SwiftUI MVVM, reusable components, game canvas, Metal viewport |
 
 ## Cross-Platform Support
 
@@ -97,6 +105,7 @@ import Darwin
 | [Systems](docs/SystemsGuide.md) | File I/O, processes, memory, POSIX interfaces |
 | [HPC](docs/HPCGuide.md) | SIMD, Accelerate, parallel algorithms |
 | [Simulation](docs/SimulationGuide.md) | Numerical integration, physics, Core Animation |
+| [UI](docs/UIGuide.md) | SwiftUI patterns, demo app, games, App Store path |
 
 ### Reference
 
@@ -104,7 +113,7 @@ import Darwin
 |-------|-------------|
 | [Best Practices](docs/BestPractices.md) | Swift idioms, patterns, and conventions |
 | [CLI Guide](docs/CLIGuide.md) | ArgumentParser patterns and CLI development |
-| [Testing](docs/TestingGuide.md) | Swift Testing, XCTest, performance benchmarks |
+| [Testing](docs/TestingGuide.md) | Swift Testing conventions, coverage gate, benchmarks |
 | [Cross-Platform](docs/CrossPlatformGuide.md) | Conditional compilation, portability patterns |
 | [Third-Party](docs/ThirdPartyGuide.md) | Dependency abstraction and SPM integration |
 | [Security Scanning](docs/SecurityScanningGuide.md) | SwiftLint, audit, Periphery, Trivy |

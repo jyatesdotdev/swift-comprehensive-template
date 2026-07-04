@@ -10,7 +10,8 @@ SwiftTemplate/
 ├── Package.resolved                     # Pinned dependency versions
 ├── Makefile                             # Build, test, and security scan shortcuts
 ├── .swiftlint.yml                       # SwiftLint configuration (security-focused)
-├── .github/workflows/security.yml       # CI: security scanning on macOS + Linux
+├── .github/workflows/ci.yml             # CI: build, tests, coverage gate, SwiftLint
+├── .github/workflows/security.yml       # CI: security scanning
 ├── scripts/
 │   └── security-scan.sh                 # Runs SwiftLint, audit, Periphery, Trivy
 ├── Sources/
@@ -50,8 +51,10 @@ SwiftTemplate/
 | Product | Type | Target | Description |
 |---------|------|--------|-------------|
 | `SwiftTemplate` | Library | `SwiftTemplate` | Core library — all modules |
+| `SwiftTemplateUI` | Library | `SwiftTemplateUI` | SwiftUI building blocks (Apple platforms) |
 | `SwiftTemplateExample` | Executable | `SwiftTemplateExample` | Minimal usage demo |
 | `SwiftTemplateCLI` | Executable | `SwiftTemplateCLI` | Full CLI with subcommands |
+| `SwiftTemplateUIDemo` | Executable | `SwiftTemplateUIDemo` | macOS demo app for the UI target |
 
 ### Dependency Graph
 
@@ -59,6 +62,12 @@ SwiftTemplate/
 SwiftTemplateCLI
 ├── SwiftTemplate
 └── ArgumentParser (swift-argument-parser 1.5+)
+
+SwiftTemplateUI
+└── SwiftTemplate
+
+SwiftTemplateUIDemo
+└── SwiftTemplateUI
 
 SwiftTemplateExample
 └── SwiftTemplate
@@ -120,7 +129,7 @@ Types conform to focused protocols (`Steppable`, `EnergyReporting`, `HTTPClient`
 `COWBuffer<Element>` demonstrates reference-counted storage with `isKnownUniquelyReferenced` to avoid unnecessary copies — the same pattern used by `Array` and `Data` in the standard library.
 
 ### Typed Error Handling
-`Config` uses Swift 5.9 typed throws (`throws(ConfigError)`) so callers know exactly which errors to handle without consulting documentation.
+Errors are domain-specific enums with associated values (`ConfigError`, `FileSystem.FSError`, `APIError`) so callers know exactly which failures to handle without consulting documentation. Adopting Swift 6 typed throws (`throws(ConfigError)`) is tracked in `TODO.md`.
 
 ### Property Wrappers
 `@Clamped` constrains values to a range at the point of assignment, eliminating scattered validation logic.
@@ -140,10 +149,19 @@ The `SwiftTemplate` target enables `StrictConcurrency` as an experimental featur
 
 ## CI / Security
 
-The GitHub Actions workflow (`.github/workflows/security.yml`) runs on every push/PR to `main`:
+Two GitHub Actions workflows run on every push/PR to `main`, both on macOS 14
+with Xcode 16.2 (required for Swift Testing):
 
-1. Builds the project on macOS 14 and Ubuntu
-2. Runs `scripts/security-scan.sh` which invokes SwiftLint, swift-package-audit, Periphery, and Trivy
+**`ci.yml`**
+1. Builds the package (`swift build`)
+2. Runs tests with coverage (`swift test --enable-code-coverage --parallel`)
+3. Fails if line coverage over `Sources/` (Tests excluded) is below **80%**
+4. Runs `swiftlint lint --strict` — any violation fails the build
+
+**`security.yml`**
+1. Installs SwiftLint, Periphery, and Trivy; audits dependencies
+2. Builds, tests with coverage, and re-checks the 80% threshold
+3. Runs `scripts/security-scan.sh`, which invokes SwiftLint, swift-package-audit, the Xcode static analyzer, Periphery, and Trivy
 
 See [SecurityScanningGuide.md](SecurityScanningGuide.md) for details on each tool.
 

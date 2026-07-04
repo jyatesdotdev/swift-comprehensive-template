@@ -21,8 +21,10 @@ let package = Package(
     ],
     products: [
         .library(name: "SwiftTemplate", targets: ["SwiftTemplate"]),
+        .library(name: "SwiftTemplateUI", targets: ["SwiftTemplateUI"]),
         .executable(name: "SwiftTemplateExample", targets: ["SwiftTemplateExample"]),
-        .executable(name: "SwiftTemplateCLI", targets: ["SwiftTemplateCLI"])
+        .executable(name: "SwiftTemplateCLI", targets: ["SwiftTemplateCLI"]),
+        .executable(name: "SwiftTemplateUIDemo", targets: ["SwiftTemplateUIDemo"])
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.3"),
@@ -33,10 +35,34 @@ let package = Package(
         .target(
             name: "SwiftTemplate",
             path: "Sources/SwiftTemplate",
+            exclude: [
+                "AGENTS.md",
+                "Concurrency/AGENTS.md",
+                "HPC/AGENTS.md",
+                "Rendering/AGENTS.md",
+                "Simulation/AGENTS.md",
+                "Systems/AGENTS.md"
+            ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ],
             plugins: swiftTemplatePlugins
+        ),
+        .target(
+            name: "SwiftTemplateUI",
+            dependencies: ["SwiftTemplate"],
+            path: "Sources/SwiftTemplateUI",
+            exclude: ["AGENTS.md"],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ],
+            plugins: swiftTemplatePlugins
+        ),
+        .executableTarget(
+            name: "SwiftTemplateUIDemo",
+            dependencies: ["SwiftTemplateUI"],
+            path: "Sources/SwiftTemplateUIDemo",
+            exclude: ["AGENTS.md"]
         ),
         .executableTarget(
             name: "SwiftTemplateCLI",
@@ -44,12 +70,14 @@ let package = Package(
                 "SwiftTemplate",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
-            path: "Sources/SwiftTemplateCLI"
+            path: "Sources/SwiftTemplateCLI",
+            exclude: ["AGENTS.md"]
         ),
         .executableTarget(
             name: "SwiftTemplateExample",
             dependencies: ["SwiftTemplate"],
-            path: "Sources/SwiftTemplateExample"
+            path: "Sources/SwiftTemplateExample",
+            exclude: ["AGENTS.md"]
         ),
         .testTarget(
             name: "SwiftTemplateTests",
@@ -60,6 +88,11 @@ let package = Package(
             name: "SwiftTemplateCLITests",
             dependencies: ["SwiftTemplateCLI"],
             path: "Tests/SwiftTemplateCLITests"
+        ),
+        .testTarget(
+            name: "SwiftTemplateUITests",
+            dependencies: ["SwiftTemplateUI"],
+            path: "Tests/SwiftTemplateUITests"
         )
     ]
 )
