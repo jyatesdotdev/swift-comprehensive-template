@@ -2,22 +2,33 @@
 
 ## Overview
 
-SwiftTemplate includes comprehensive tests covering unit testing, async testing, and performance benchmarking using both Swift Testing and XCTest.
+SwiftTemplate uses **Swift Testing** (`import Testing`) exclusively — `@Suite`,
+`@Test`, and `#expect`. XCTest is not used anywhere in this repository and must
+not be reintroduced. Swift Testing requires a Swift 6 / Xcode 16.2+ toolchain
+(CI pins Xcode 16.2).
+
+CI runs `swift test --enable-code-coverage --parallel` and enforces a **minimum
+of 80% line coverage** over `Sources/` (Tests excluded). New public API needs
+accompanying tests to keep the gate green.
 
 ## Running Tests
 
 ```bash
-swift test                    # Build and run all tests
-swift test --filter Simulation # Run a specific test suite
-swift test --parallel         # Run tests in parallel
+swift test                                   # Build and run all tests
+swift test --filter SimulationTests          # Run a specific suite
+swift test --filter HPCTests/simdDot         # Run a single test
+swift test --enable-code-coverage --parallel # CI-equivalent run
 ```
 
 ## Test Structure
 
-### Swift Testing (Primary — Swift 5.9+)
+Test files mirror the source layout: `Sources/SwiftTemplate/HPC/HPC.swift` is
+tested by `Tests/SwiftTemplateTests/HPCTests.swift`; CLI commands are tested in
+`Tests/SwiftTemplateCLITests/SwiftTemplateCLITests.swift`.
 
 ```swift
 import Testing
+import Foundation
 @testable import SwiftTemplate
 
 @Suite("MyFeature")
@@ -26,7 +37,8 @@ struct MyFeatureTests {
         #expect(1 + 1 == 2)
     }
 
-    @Test func throwingFunction() throws {
+    @Test func throwingFunction() {
+        let config = Config([:])
         #expect(throws: ConfigError.self) { try config.require("missing") }
     }
 
@@ -37,22 +49,28 @@ struct MyFeatureTests {
 }
 ```
 
-### XCTest (Fallback)
+### Platform-Conditional Tests
+
+Guard platform-dependent tests the same way as the code under test:
 
 ```swift
-import XCTest
-@testable import SwiftTemplate
-
-final class MyFeatureTests: XCTestCase {
-    func testBasic() { XCTAssertEqual(1 + 1, 2) }
-    func testAsync() async { /* async tests supported in XCTest too */ }
-    func testPerformance() { measure { /* benchmarked code */ } }
+#if canImport(Accelerate)
+@Test func vectorAdd() {
+    #expect(AccelerateOps.vectorAdd([1, 2], [3, 4]) == [4, 6])
 }
+#endif
 ```
 
-### Conditional Compilation
+For hardware that may be absent (e.g. GPU on CI runners), probe and return
+early instead of failing:
 
-Use `#if canImport(Testing)` / `#elseif canImport(XCTest)` to support both frameworks in a single file. This ensures tests work across environments (Xcode, SPM CLI, Linux).
+```swift
+@Test func gpuDoubling() throws {
+    guard let context = MetalRendering.GPUContext() else { return } // no GPU
+    let out = try MetalRendering.doubleArray([1, 2], context: context)
+    #expect(out == [2, 4])
+}
+```
 
 ## Test Categories
 
@@ -66,44 +84,25 @@ Use `#if canImport(Testing)` / `#elseif canImport(XCTest)` to support both frame
 - TaskGroup-based parallel map
 - Throttled concurrency
 
-### Performance Tests
-- `ContinuousClock.measure {}` for Swift Testing
-- `measure {}` for XCTest
-- Throughput sanity checks (e.g., 100K Vec2 ops < 1 second)
+### CLI Tests
+- Parse without executing: `try GreetCommand.parse(["Alice", "--count", "3"])`,
+  then `#expect` on the decoded properties
+- Validation failures: `#expect(throws: (any Error).self) { try GreetCommand.parse(["Alice", "--count", "0"]) }`
+- `run()` smoke tests for output-producing commands
 
-## UI Testing Patterns (Xcode)
-
-UI tests require an Xcode project with a UI test target. Key patterns:
-
-```swift
-import XCTest
-
-final class AppUITests: XCTestCase {
-    let app = XCUIApplication()
-
-    override func setUp() { app.launch() }
-
-    func testNavigation() {
-        app.buttons["Start"].tap()
-        XCTAssertTrue(app.staticTexts["Welcome"].exists)
-    }
-
-    func testLaunchPerformance() throws {
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            app.launch()
-        }
-    }
-}
-```
+### Performance Checks
+- `ContinuousClock().measure {}` with generous sanity thresholds
+  (e.g., 100K Vec2 ops < 1 second) — not brittle micro-benchmarks
 
 ## Best Practices
 
-1. **Name tests descriptively** — test function names should describe the behavior being verified
+1. **Name tests descriptively** — lowerCamelCase function names describing the behavior, no `test` prefix
 2. **One assertion per concept** — group related checks, but test distinct behaviors separately
-3. **Use accuracy for floating point** — `#expect(abs(result - expected) < 1e-6)` or `XCTAssertEqual(_:_:accuracy:)`
+3. **Use tolerances for floating point** — `#expect(abs(result - expected) < 1e-6)`, never `==` on computed floats
 4. **Test edge cases** — zero vectors, empty collections, missing keys, boundary values
-5. **Async tests** — use `async` test functions directly; avoid `XCTestExpectation` when possible
-6. **Performance baselines** — use `measure {}` (XCTest) or `ContinuousClock` (Swift Testing) with sanity thresholds
+5. **Async tests await results directly** — no sleeps, polling, or timing races
+6. **No force operations** — `!`, `as!`, and `try!` are SwiftLint errors in tests too; use `throws` test functions
+7. **Clean up temp files** — unique `NSTemporaryDirectory()` + `UUID` paths, removed in `defer`
 
 ---
 
