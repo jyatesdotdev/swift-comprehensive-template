@@ -147,6 +147,23 @@ extension MyService: Content {}
 
 See `Sources/SwiftTemplate/ThirdPartyPatterns.swift` for compilable examples.
 
+## Typed Fetching & Mocks
+
+`APIService.fetch(_:from:)` decodes straight into a `Decodable` model and
+throws `APIError.badStatus`/`.decodingFailed` — prefer it over the untyped
+`fetchJSON`. `MockHTTPClient` makes the DI story concrete in tests:
+
+```swift
+struct User: Codable, Equatable { let name: String }
+
+let mock = MockHTTPClient.returning(Data(#"{"name":"Ada"}"#.utf8))
+let service = APIService(deps: AppDependencies(http: mock, logger: PrintLogger()))
+let user: User = try await service.fetch(from: url)
+```
+
+For URL-dependent behavior, construct `MockHTTPClient { url in ... }` with a
+custom handler.
+
 ---
 
 > **See also:** [ARCHITECTURE.md](ARCHITECTURE.md) · [EXTENDING.md](EXTENDING.md) · [TUTORIAL.md](TUTORIAL.md) · [TOOLCHAIN.md](TOOLCHAIN.md)

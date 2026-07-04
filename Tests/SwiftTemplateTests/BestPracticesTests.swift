@@ -92,6 +92,57 @@ struct BestPracticesExtendedTests {
     }
 }
 
+// MARK: - StateMachine Tests
+
+@Suite("StateMachine")
+struct StateMachineTests {
+
+    enum DoorState { case open, closed, locked }
+    enum DoorEvent { case open, close, lock, unlock }
+
+    private func makeDoor() -> StateMachine<DoorState, DoorEvent> {
+        StateMachine(initial: .closed, transitions: [
+            .init(from: .closed, on: .open, to: .open),
+            .init(from: .open, on: .close, to: .closed),
+            .init(from: .closed, on: .lock, to: .locked),
+            .init(from: .locked, on: .unlock, to: .closed)
+        ])
+    }
+
+    @Test func allowedTransitionsAdvanceState() {
+        var door = makeDoor()
+        let opened = door.handle(.open)
+        #expect(opened)
+        #expect(door.state == .open)
+        let closed = door.handle(.close)
+        #expect(closed)
+        #expect(door.state == .closed)
+    }
+
+    @Test func disallowedEventsAreIgnored() {
+        var door = makeDoor()
+        door.handle(.lock)
+        let opened = door.handle(.open)
+        #expect(!opened, "A locked door cannot open")
+        #expect(door.state == .locked)
+    }
+
+    @Test func nextStatePreviewsWithoutMutating() {
+        let door = makeDoor()
+        #expect(door.nextState(for: .open) == .open)
+        #expect(door.nextState(for: .unlock) == nil)
+        #expect(door.state == .closed)
+    }
+
+    @Test func valueSemanticsSnapshotState() {
+        var a = makeDoor()
+        let b = a
+        a.handle(.open)
+        #expect(a.state == .open)
+        #expect(b.state == .closed)
+    }
+}
+
 // MARK: - Smoke Test
 
 @Test func version() {

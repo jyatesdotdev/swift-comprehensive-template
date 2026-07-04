@@ -164,3 +164,85 @@ public struct AudioSettings {
     /// Creates audio settings with default values.
     public init() {}
 }
+
+// MARK: - State Machine
+
+/// A finite-state machine driven by an explicit transition table.
+///
+/// Invalid events are simply ignored (``handle(_:)`` returns `false`), which
+/// makes illegal state transitions impossible rather than merely untested:
+///
+/// ```swift
+/// var door = StateMachine(initial: "closed", transitions: [
+///     .init(from: "closed", on: "open",  to: "open"),
+///     .init(from: "open",   on: "close", to: "closed"),
+/// ])
+/// door.handle("open")   // true  → state == "open"
+/// door.handle("open")   // false → state unchanged
+/// ```
+public struct StateMachine<State: Hashable & Sendable, Event: Hashable & Sendable>: Sendable {
+    /// One allowed transition in the table.
+    public struct Transition: Sendable {
+        /// The state this transition starts from.
+        public let from: State
+        /// The event that triggers the transition.
+        public let on: Event
+        /// The destination state.
+        public let to: State
+
+        /// Creates a transition.
+        ///
+        /// - Parameters:
+        ///   - from: The state this transition starts from.
+        ///   - on: The event that triggers it.
+        ///   - to: The destination state.
+        public init(from: State, on: Event, to: State) {
+            self.from = from
+            self.on = on
+            self.to = to
+        }
+    }
+
+    private struct Key: Hashable {
+        let state: State
+        let event: Event
+    }
+
+    /// The current state.
+    public private(set) var state: State
+    private let transitions: [Key: State]
+
+    /// Creates a state machine.
+    ///
+    /// - Parameters:
+    ///   - initial: The starting state.
+    ///   - transitions: The allowed transitions. Later entries override
+    ///     earlier duplicates.
+    public init(initial: State, transitions: [Transition]) {
+        self.state = initial
+        var table: [Key: State] = [:]
+        for transition in transitions {
+            table[Key(state: transition.from, event: transition.on)] = transition.to
+        }
+        self.transitions = table
+    }
+
+    /// The state that `event` would lead to, or `nil` if not allowed here.
+    ///
+    /// - Parameter event: The event to look up.
+    /// - Returns: The destination state, or `nil`.
+    public func nextState(for event: Event) -> State? {
+        transitions[Key(state: state, event: event)]
+    }
+
+    /// Applies an event if the transition table allows it.
+    ///
+    /// - Parameter event: The event to apply.
+    /// - Returns: `true` if a transition occurred, `false` if ignored.
+    @discardableResult
+    public mutating func handle(_ event: Event) -> Bool {
+        guard let next = nextState(for: event) else { return false }
+        state = next
+        return true
+    }
+}

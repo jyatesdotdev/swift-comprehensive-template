@@ -111,6 +111,25 @@ This project enables `StrictConcurrency`. Key rules:
 - Mark classes as `@unchecked Sendable` only when you manually guarantee safety (e.g., `ReadWriteLock`)
 - Actors are implicitly `Sendable`
 
+## Resilience Primitives
+
+`Resilience` (in `Concurrency/Resilience.swift`) wraps unreliable async work:
+
+```swift
+// Deadline — throws TimeoutError if the fetch takes over 2 seconds.
+let data = try await Resilience.withTimeout(.seconds(2)) {
+    try await AsyncPatterns.fetchData(from: url)
+}
+
+// Exponential backoff with full jitter; cancellation is never retried.
+let result = try await Resilience.retry(maxAttempts: 4, baseDelay: .milliseconds(200)) {
+    try await flakyOperation()
+}
+```
+
+`retry` accepts a `shouldRetry` predicate to bail out on non-transient errors
+(e.g. don't retry a 404).
+
 ---
 
 > **See also:** [ARCHITECTURE.md](ARCHITECTURE.md) · [TUTORIAL.md](TUTORIAL.md) · [BestPractices.md](BestPractices.md) · [TOOLCHAIN.md](TOOLCHAIN.md)

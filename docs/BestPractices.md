@@ -305,6 +305,23 @@ for p in particles { accumulator += p.force }
 | Concurrency | Actors for shared state | Manual locks (usually) |
 | Naming | Clarity at the call site | Abbreviations |
 
+## State Machines
+
+`StateMachine<State, Event>` makes legal transitions an explicit table and
+ignores everything else — invalid states become unrepresentable instead of
+merely untested:
+
+```swift
+var door = StateMachine(initial: DoorState.closed, transitions: [
+    .init(from: .closed, on: .open,  to: .open),
+    .init(from: .open,   on: .close, to: .closed),
+])
+door.handle(.open)   // true → .open
+door.handle(.open)   // false, ignored
+```
+
+It is a `Sendable` value type, so copies snapshot the current state for free.
+
 ---
 
 > **See also:** [ARCHITECTURE.md](ARCHITECTURE.md) · [TUTORIAL.md](TUTORIAL.md) · [EXTENDING.md](EXTENDING.md) · [TOOLCHAIN.md](TOOLCHAIN.md)
