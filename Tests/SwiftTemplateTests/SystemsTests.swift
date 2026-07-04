@@ -108,6 +108,22 @@ struct SystemsTests {
         #expect(result.exitCode == 1)
     }
 
+    // ~200 KB — far beyond the ~64 KB pipe buffer that deadlocks naive readers.
+    private static let floodScript = "i=0; while [ $i -lt 5000 ]; do echo " +
+        "0123456789012345678901234567890123456789; i=$((i+1)); done"
+
+    @Test func shellLargeStdoutDoesNotDeadlock() {
+        let result = Shell.sh(Self.floodScript)
+        #expect(result.succeeded)
+        #expect(result.stdout.count > 100_000)
+    }
+
+    @Test func shellLargeStderrDoesNotDeadlock() {
+        let result = Shell.sh("{ \(Self.floodScript); } 1>&2")
+        #expect(result.succeeded)
+        #expect(result.stderr.count > 100_000)
+    }
+
     @Test func streamIOReadChunked() throws {
         let tmp = PortablePath.join(PortablePath.temp, "swift-chunk-\(UUID().uuidString).txt")
         try FileSystem.write(Data("abcdef".utf8), to: tmp)

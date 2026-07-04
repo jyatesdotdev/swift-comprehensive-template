@@ -184,7 +184,16 @@ public enum Shell {
         public var succeeded: Bool { exitCode == 0 }
     }
 
+    // Written by exactly one background thread, read only after group.wait().
+    private final class DataBox: @unchecked Sendable {
+        var data = Data()
+    }
+
     /// Runs a command synchronously, capturing stdout and stderr.
+    ///
+    /// Both pipes are drained concurrently *before* waiting for exit — a child
+    /// that fills one pipe's buffer while the parent blocks on the other would
+    /// otherwise deadlock.
     ///
     /// - Parameters:
     ///   - command: Path to the executable.
@@ -202,13 +211,25 @@ public enum Shell {
 
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             return RunResult(exitCode: -1, stdout: "", stderr: error.localizedDescription)
         }
 
-        let out = String(decoding: outPipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-        let err = String(decoding: errPipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        // nonisolated(unsafe): the handle is read from exactly one thread.
+        nonisolated(unsafe) let outHandle = outPipe.fileHandleForReading
+        let outBox = DataBox()
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global().async {
+            outBox.data = outHandle.readDataToEndOfFile()
+            group.leave()
+        }
+        let errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+        group.wait()
+        process.waitUntilExit()
+
+        let out = String(decoding: outBox.data, as: UTF8.self)
+        let err = String(decoding: errData, as: UTF8.self)
         return RunResult(exitCode: process.terminationStatus, stdout: out, stderr: err)
     }
 

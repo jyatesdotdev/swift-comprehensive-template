@@ -85,6 +85,14 @@ Signals.ignore(SIGPIPE)
 - Always `defer { ptr.deallocate() }` when using manual memory
 - Use `Unmanaged` to pass Swift objects through C callback contexts
 
+## Process Output & Pipe Buffers
+
+`Shell.run` drains stdout and stderr **concurrently, before** calling
+`waitUntilExit()`. This ordering is load-bearing: pipes buffer ~64 KB, so a
+child producing more output than that would block writing while a naive parent
+blocks waiting — a permanent deadlock. If you write your own `Process` code,
+never wait for exit before the pipes are fully drained.
+
 ---
 
 > **See also:** [ARCHITECTURE.md](ARCHITECTURE.md) · [TUTORIAL.md](TUTORIAL.md) · [CrossPlatformGuide.md](CrossPlatformGuide.md) · [TOOLCHAIN.md](TOOLCHAIN.md)
