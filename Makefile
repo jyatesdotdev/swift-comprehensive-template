@@ -1,10 +1,20 @@
-.PHONY: build test clean security lint audit analyze periphery trivy
+.PHONY: build test clean verify coverage security lint audit analyze periphery trivy
 
 build:
 	swift build
 
 test:
 	swift test
+
+# Everything CI checks, in one command: build, tests, strict lint.
+verify:
+	swift build
+	swift test
+	swiftlint lint --strict
+
+# Tests with coverage + the 80% threshold gate (same script CI runs).
+coverage:
+	./scripts/check-coverage.sh
 
 clean:
 	swift package clean
