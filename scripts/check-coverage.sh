@@ -17,7 +17,11 @@ cd "$PROJECT_DIR"
 THRESHOLD="${1:-80.0}"
 IGNORE_REGEX='\.build|Tests|SwiftTemplateUI|SwiftTemplateUIDemo|SwiftTemplateExample'
 
-swift test --enable-code-coverage --parallel
+# Do not pass --parallel: on macos-14 CI, `swift test --enable-code-coverage
+# --parallel` starts `swiftpm-testing` and never returns (jobs sit until the
+# 6h Actions cap). Serial coverage is slower locally but finishes.
+echo "Running tests with code coverage (serial)…"
+swift test --enable-code-coverage
 
 BIN_PATH=$(swift build --show-bin-path)
 PROFDATA=$(find "$BIN_PATH" -name 'default.profdata' -print -quit)
