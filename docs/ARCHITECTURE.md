@@ -152,12 +152,12 @@ The `SwiftTemplate` target enables `StrictConcurrency` as an experimental featur
 
 ## CI / Security
 
-Two GitHub Actions workflows run on every push/PR to `main`, both on macOS 14
-with Xcode 16.2 (required for Swift Testing):
+Two GitHub Actions workflows run on every push/PR to `main`, both on macOS 15
+with Xcode 16.2+ (required for Swift Testing):
 
 **`ci.yml`**
 1. Builds the package (`swift build`)
-2. Runs `swift test` (no coverage — `--enable-code-coverage` hangs `swiftpm-testing` on macos-14 GitHub runners)
+2. Runs `swift test --verbose` under `script` (no coverage — `--enable-code-coverage` hangs `swiftpm-testing` on GitHub-hosted macOS)
 3. Runs `swiftlint lint --strict` — any violation fails the build
 
 The 80% **line** coverage gate is `make coverage` / `./scripts/check-coverage.sh` locally (Tests, SwiftTemplateUI, UIDemo, and Example excluded).

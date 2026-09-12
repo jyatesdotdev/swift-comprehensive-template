@@ -77,7 +77,7 @@ The GitHub Actions workflow (`.github/workflows/security.yml`) runs on every pus
 
 | Runner | Tools Run |
 |--------|-----------|
-| macOS (macos-14) | SwiftLint, `swift package audit` (if available), Periphery, Trivy; analyze skipped (no Xcode scheme) |
+| macOS (macos-15) | SwiftLint, `swift package audit` (if available), Periphery, Trivy; analyze skipped (no Xcode scheme) |
 
 **Security gate:** The workflow fails if `security-scan.sh` exits non-zero, which happens when any tool (except Periphery) reports findings.
 

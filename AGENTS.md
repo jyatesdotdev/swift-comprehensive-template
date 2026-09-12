@@ -13,7 +13,8 @@ Because readers copy patterns from this repo, **code quality is the product**.
 A working-but-sloppy change is a failed change here.
 
 Toolchain: Swift tools version 5.9 manifest, but tests use Swift Testing, which
-needs a Swift 6 / Xcode 16.2+ toolchain (CI pins Xcode 16.2 on macos-14).
+needs a Swift 6 / Xcode 16.2+ toolchain (CI uses macos-15 and the newest
+available Xcode 16.x).
 
 ## Directory Map
 
@@ -61,7 +62,7 @@ added or removed code).
 3. **80% minimum code coverage**, enforced locally by `make coverage` /
    `scripts/check-coverage.sh` over the core library and CLI (the UI target and
    entry-point executables are excluded — see the script header). CI runs
-   `swift test` without coverage because instrumentation hangs on GHA macos-14.
+   `swift test` without coverage because instrumentation hangs on GitHub-hosted macOS.
    New public API needs tests.
 4. **Code must compile on Linux.** Guard Apple-only frameworks with
    `#if canImport(Metal)` / `#if canImport(Accelerate)` / `#if os(macOS)`.

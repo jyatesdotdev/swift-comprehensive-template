@@ -12,8 +12,8 @@ verify:
 	swift test
 	swiftlint lint --strict
 
-# Tests with coverage + the 80% threshold gate. Local-only: GHA macos-14 hangs
-# on `swift test --enable-code-coverage`.
+# Tests with coverage + the 80% threshold gate. Local-only: GitHub-hosted macOS
+# hangs on `swift test --enable-code-coverage`.
 coverage:
 	./scripts/check-coverage.sh
 

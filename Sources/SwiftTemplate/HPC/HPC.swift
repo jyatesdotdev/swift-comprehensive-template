@@ -131,7 +131,7 @@ public enum AccelerateOps {
 
     // MARK: BLAS
 
-    /// Matrix multiply (`C = A × B`) using `cblas_sgemm`.
+    /// Matrix multiply (`C = A × B`) using `vDSP_mmul`.
     ///
     /// - Parameters:
     ///   - a: Matrix A in row-major layout (M×K).
@@ -147,13 +147,13 @@ public enum AccelerateOps {
         precondition(a.count == m * k, "a.count must equal m * k")
         precondition(b.count == k * n, "b.count must equal k * n")
         var c = [Float](repeating: 0, count: m * n)
-        // Note: cblas_sgemm deprecated in macOS 13.3 in favor of ILP64 variant.
-        // Compile with -DACCELERATE_NEW_LAPACK for the updated headers.
-        cblas_sgemm(
-            CblasRowMajor, CblasNoTrans, CblasNoTrans,
-            Int32(m), Int32(n), Int32(k),
-            1.0, a, Int32(k), b, Int32(n),
-            0.0, &c, Int32(n)
+        vDSP_mmul(
+            a, 1,
+            b, 1,
+            &c, 1,
+            vDSP_Length(m),
+            vDSP_Length(n),
+            vDSP_Length(k)
         )
         return c
     }

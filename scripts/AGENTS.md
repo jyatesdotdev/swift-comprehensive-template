@@ -7,7 +7,7 @@ Two scripts live here:
   `make periphery`, `make trivy`) and by `.github/workflows/security.yml`.
 - `check-coverage.sh` — runs tests with coverage and enforces the 80% line
   threshold. Invoked by `make coverage` locally. CI does **not** run it:
-  `swift test --enable-code-coverage` hangs on macos-14 GitHub runners.
+  `swift test --enable-code-coverage` hangs on GitHub-hosted macOS runners.
   The exclusion regex (UI target, entry-point executables) is documented in
   its header — change it there, nowhere else.
 

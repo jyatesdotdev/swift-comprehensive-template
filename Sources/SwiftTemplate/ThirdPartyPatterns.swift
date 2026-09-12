@@ -19,9 +19,45 @@ public protocol HTTPClient: Sendable {
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 
-/// Holds the `URLSessionTask` so cancellation can race with start.
-private final class URLSessionTaskBox: @unchecked Sendable { // written on request task, read from cancel
-    var task: URLSessionTask?
+/// Coordinates `URLSessionTask` start, cancel, and a single continuation resume.
+private final class URLSessionTaskBox: @unchecked Sendable { // NSLock serializes task/cancel/resume
+    private let lock = NSLock()
+    private var task: URLSessionTask?
+    private var cancelled = false
+    private var finished = false
+
+    /// Starts `task` unless cancel already won. Returns `false` if cancelled first.
+    func start(_ task: URLSessionTask) -> Bool {
+        lock.lock()
+        if cancelled {
+            lock.unlock()
+            return false
+        }
+        self.task = task
+        lock.unlock()
+        task.resume()
+        return true
+    }
+
+    func cancel() {
+        lock.lock()
+        cancelled = true
+        let current = task
+        lock.unlock()
+        current?.cancel()
+    }
+
+    /// Runs `body` at most once (the continuation resume).
+    func finish(_ body: () -> Void) {
+        lock.lock()
+        if finished {
+            lock.unlock()
+            return
+        }
+        finished = true
+        lock.unlock()
+        body()
+    }
 }
 #endif
 
@@ -31,20 +67,23 @@ extension URLSession: HTTPClient {
         let holder = URLSessionTaskBox()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { cont in
-                let task = dataTask(with: url) { d, r, e in
-                    if let e {
-                        cont.resume(throwing: e)
-                    } else if let d, let r {
-                        cont.resume(returning: (d, r))
-                    } else {
-                        cont.resume(throwing: URLError(.badServerResponse))
+                let task = dataTask(with: url) { data, response, error in
+                    holder.finish {
+                        if let error {
+                            cont.resume(throwing: error)
+                        } else if let data, let response {
+                            cont.resume(returning: (data, response))
+                        } else {
+                            cont.resume(throwing: URLError(.badServerResponse))
+                        }
                     }
                 }
-                holder.task = task
-                task.resume()
+                if !holder.start(task) {
+                    holder.finish { cont.resume(throwing: CancellationError()) }
+                }
             }
         } onCancel: {
-            holder.task?.cancel()
+            holder.cancel()
         }
         #else
         return try await self.data(from: url, delegate: nil)

@@ -13,9 +13,8 @@
   touching vDSP, BLAS, or LAPACK goes **inside** that block, and every
   Accelerate API needs a portable SIMD or scalar counterpart available so Linux
   users aren't stranded.
-- `cblas_sgemm` is deprecated on macOS 13.3+ in favor of ILP64 variants; the
-  existing code documents this. Prefer the `vDSP` struct API (e.g. `vDSP.add`)
-  over raw `vDSP_*` C calls when both exist.
+- Prefer the `vDSP` struct API (e.g. `vDSP.add`) over raw `vDSP_*` C calls when
+  both exist. Matrix multiply uses `vDSP_mmul`, not deprecated `cblas_sgemm`.
 
 ## Established patterns to reuse
 

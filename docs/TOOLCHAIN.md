@@ -120,7 +120,7 @@ Any editor with LSP support works with SourceKit-LSP. Ensure `sourcekit-lsp` is 
 
 ## CI Integration
 
-The GitHub Actions workflow (`.github/workflows/security.yml`) installs tools on **macos-14** (Xcode 16.2) and runs the full scan there. There is no Linux CI runner; Linux tool notes below are for local use.
+The GitHub Actions workflow (`.github/workflows/security.yml`) installs tools on **macos-15** and runs the full scan there. There is no Linux CI runner; Linux tool notes below are for local use.
 
 See [SecurityScanningGuide.md](SecurityScanningGuide.md) for details on CI behavior and failure modes.
 
