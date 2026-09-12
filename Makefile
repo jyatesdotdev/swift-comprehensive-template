@@ -6,13 +6,14 @@ build:
 test:
 	swift test
 
-# Build, tests, and strict lint. CI also runs `./scripts/check-coverage.sh` (same as `make coverage`).
+# Build, tests, and strict lint (matches CI, minus the coverage hang on GHA).
 verify:
 	swift build
 	swift test
 	swiftlint lint --strict
 
-# Tests with coverage + the 80% threshold gate (same script CI runs).
+# Tests with coverage + the 80% threshold gate. Local-only: GHA macos-14 hangs
+# on `swift test --enable-code-coverage`.
 coverage:
 	./scripts/check-coverage.sh
 

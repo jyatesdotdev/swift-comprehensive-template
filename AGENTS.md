@@ -58,9 +58,11 @@ added or removed code).
    **errors**. Use `guard let`, `if let`, `??`, `as?`, or throw instead.
 2. **Swift Testing only** (`import Testing`, `@Suite`, `@Test`, `#expect`).
    Never `import XCTest`. XCTest was deliberately removed from this repo.
-3. **80% minimum code coverage**, enforced by `scripts/check-coverage.sh` over
-   the core library and CLI (the UI target and entry-point executables are
-   excluded — see the script header). New public API needs tests.
+3. **80% minimum code coverage**, enforced locally by `make coverage` /
+   `scripts/check-coverage.sh` over the core library and CLI (the UI target and
+   entry-point executables are excluded — see the script header). CI runs
+   `swift test` without coverage because instrumentation hangs on GHA macos-14.
+   New public API needs tests.
 4. **Code must compile on Linux.** Guard Apple-only frameworks with
    `#if canImport(Metal)` / `#if canImport(Accelerate)` / `#if os(macOS)`.
    On Linux, `URLSession` needs `#if canImport(FoundationNetworking)`.

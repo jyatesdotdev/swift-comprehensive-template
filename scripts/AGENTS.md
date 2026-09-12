@@ -6,9 +6,10 @@ Two scripts live here:
   Makefile (`make security`, `make lint`, `make audit`, `make analyze`,
   `make periphery`, `make trivy`) and by `.github/workflows/security.yml`.
 - `check-coverage.sh` — runs tests with coverage and enforces the 80% line
-  threshold. The single source of truth for the gate: both CI workflows and
-  `make coverage` call it. The exclusion regex (UI target, entry-point
-  executables) is documented in its header — change it there, nowhere else.
+  threshold. Invoked by `make coverage` locally. CI does **not** run it:
+  `swift test --enable-code-coverage` hangs on macos-14 GitHub runners.
+  The exclusion regex (UI target, entry-point executables) is documented in
+  its header — change it there, nowhere else.
 
 ## Script contract (preserve these behaviors)
 

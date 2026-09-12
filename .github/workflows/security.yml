@@ -37,8 +37,5 @@ jobs:
       - name: Build
         run: swift build
 
-      - name: Tests & coverage gate
-        run: ./scripts/check-coverage.sh
-
       - name: Run security scan
         run: ./scripts/security-scan.sh

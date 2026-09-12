@@ -157,12 +157,14 @@ with Xcode 16.2 (required for Swift Testing):
 
 **`ci.yml`**
 1. Builds the package (`swift build`)
-2. Runs `./scripts/check-coverage.sh` (`swift test --enable-code-coverage --parallel` plus the 80% **line** coverage gate over the core library and CLI; Tests, SwiftTemplateUI, UIDemo, and Example are excluded)
+2. Runs `swift test` (no coverage — `--enable-code-coverage` hangs `swiftpm-testing` on macos-14 GitHub runners)
 3. Runs `swiftlint lint --strict` — any violation fails the build
+
+The 80% **line** coverage gate is `make coverage` / `./scripts/check-coverage.sh` locally (Tests, SwiftTemplateUI, UIDemo, and Example excluded).
 
 **`security.yml`**
 1. Installs SwiftLint, Periphery, and Trivy; audits dependencies
-2. Builds, tests with coverage, and re-checks the 80% threshold
+2. Builds the package
 3. Runs `scripts/security-scan.sh`, which invokes SwiftLint, `swift package audit`, Periphery, and Trivy. `xcodebuild analyze` is skipped here (no Xcode project/scheme).
 
 See [SecurityScanningGuide.md](SecurityScanningGuide.md) for details on each tool.

@@ -7,11 +7,12 @@ SwiftTemplate uses **Swift Testing** (`import Testing`) exclusively — `@Suite`
 not be reintroduced. Swift Testing requires a Swift 6 / Xcode 16.2+ toolchain
 (CI pins Xcode 16.2).
 
-CI runs `./scripts/check-coverage.sh`, which executes
-`swift test --enable-code-coverage --parallel` and enforces a **minimum of 80%
-line coverage** over the core library and CLI. Excluded from the gate: `Tests/`,
-`.build/`, `SwiftTemplateUI`, `SwiftTemplateUIDemo`, and `SwiftTemplateExample`.
-New public API on the gated targets needs accompanying tests.
+CI runs `swift test` (coverage instrumentation hangs on macos-14 GitHub runners).
+Locally, `make coverage` / `./scripts/check-coverage.sh` enforces a **minimum of
+80% line coverage** over the core library and CLI. Excluded from the gate:
+`Tests/`, `.build/`, `SwiftTemplateUI`, `SwiftTemplateUIDemo`, and
+`SwiftTemplateExample`. New public API on the gated targets needs accompanying
+tests.
 
 ## Running Tests
 
@@ -19,7 +20,7 @@ New public API on the gated targets needs accompanying tests.
 swift test                                   # Build and run all tests
 swift test --filter SimulationTests          # Run a specific suite
 swift test --filter HPCTests/simdDot         # Run a single test
-swift test --enable-code-coverage --parallel # CI-equivalent run
+make coverage                                # Local 80% line-coverage gate
 ```
 
 ## Test Structure
