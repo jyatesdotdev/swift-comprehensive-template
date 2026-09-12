@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test
@@ -33,11 +37,16 @@ jobs:
       - name: Build
         run: swift build
 
-      # Coverage stays local (`make coverage`): --enable-code-coverage hangs
-      # swiftpm-testing on GitHub-hosted macOS. Give tests a TTY; piped stdin
-      # has hung the runner after "Build complete" on macos-14.
+      # `swift test` hangs in swiftpm-testing after "Build complete" on
+      # GitHub-hosted macOS (TTY/`script` does not help). xcodebuild uses
+      # Xcode's test runner instead. Coverage stays `make coverage` locally.
       - name: Tests
-        run: script -q /dev/null swift test --verbose
+        run: |
+          xcodebuild test \
+            -scheme SwiftTemplate \
+            -destination 'platform=macOS' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
 
   lint:
     name: SwiftLint
