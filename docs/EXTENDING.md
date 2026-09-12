@@ -34,9 +34,7 @@ public struct NetworkClient {
     swiftSettings: [
         .enableExperimentalFeature("StrictConcurrency")
     ],
-    plugins: [
-        .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
-    ]
+    plugins: swiftTemplatePlugins // macOS-only SwiftLint plugin; empty array on Linux
 ),
 ```
 
@@ -62,7 +60,7 @@ public struct NetworkClient {
 ### Checklist for new modules
 
 - [ ] `StrictConcurrency` enabled in `swiftSettings`
-- [ ] `SwiftLintBuildToolPlugin` added to `plugins`
+- [ ] SwiftLint plugin via `swiftTemplatePlugins` (macOS-only; empty array on Linux — see `Package.swift`)
 - [ ] Source path under `Sources/` matches the `path` parameter
 - [ ] All public types have `///` doc comments
 
@@ -154,7 +152,7 @@ swift build
 - `.upToNextMinor(from: "1.5.0")` — allows patch updates only
 - `branch: "main"` — track a branch (avoid in production)
 
-After resolving, commit `Package.resolved` to lock dependency versions.
+This template gitignores `Package.resolved` (library template). Apps that need a locked pin file can commit it; do not add it here.
 
 ## Adding SwiftLint Rules
 
@@ -228,7 +226,8 @@ struct NetworkingTests {
     @Test("Client initializes")
     func clientInit() {
         let client = NetworkClient()
-        #expect(client != nil)
+        _ = client
+        #expect(true)
     }
 }
 ```

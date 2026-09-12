@@ -21,6 +21,9 @@ public enum Resilience {
 
     /// Runs an operation with a deadline, cancelling it on expiry.
     ///
+    /// If `operation` ignores cancellation, the task group still waits for it
+    /// after throwing ``TimeoutError``.
+    ///
     /// - Parameters:
     ///   - duration: The maximum time the operation may take.
     ///   - operation: The async work to race against the deadline.

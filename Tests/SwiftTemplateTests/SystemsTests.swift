@@ -25,8 +25,13 @@ struct SystemsTests {
     }
 
     @Test func fileSystemListDirectory() throws {
-        let entries = try FileSystem.listDirectory(at: PortablePath.temp)
-        #expect(entries is [String])
+        let dir = PortablePath.join(PortablePath.temp, "swift-list-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(atPath: dir) }
+        let name = "entry.txt"
+        try Data("x".utf8).write(to: URL(fileURLWithPath: PortablePath.join(dir, name)))
+        let entries = try FileSystem.listDirectory(at: dir)
+        #expect(entries.contains(name))
     }
 
     @Test func fileSystemWalk() throws {
@@ -129,7 +134,7 @@ struct SystemsTests {
         try FileSystem.write(Data("abcdef".utf8), to: tmp)
         var chunks: [Data] = []
         try StreamIO.readChunked(path: tmp, chunkSize: 3) { chunks.append($0) }
-        #expect(!chunks.isEmpty)
+        #expect(chunks == [Data("abc".utf8), Data("def".utf8)])
         try FileManager.default.removeItem(atPath: tmp)
     }
 

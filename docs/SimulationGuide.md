@@ -35,7 +35,7 @@ Particles use Störmer-Verlet integration — position-based, stable, and simple
 Manages a collection of particles with gravity and ground-plane collision. Call `step(dt:)` each frame.
 
 ### Springs
-Position-based constraint relaxation between particle pairs. Apply after integration to maintain distance constraints (cloth, soft bodies).
+`Spring(a:b:restLength:)` is position-based constraint relaxation between particle pairs. Call `apply(to:)` after integration (repeat for stiffness) to maintain distance constraints (cloth, soft bodies). There is no gain/`stiffness` stored on `Spring`.
 
 ### AABB Collision
 Axis-aligned bounding box overlap test for broad-phase collision detection.

@@ -60,6 +60,17 @@ struct ItemListViewModelTests {
         #expect(viewModel.state.errorMessage != nil)
     }
 
+    @Test func loadCancellationDoesNotFail() async {
+        let viewModel = ItemListViewModel {
+            try await Task.sleep(for: .seconds(60))
+            return ["x"]
+        }
+        let task = Task { await viewModel.load() }
+        task.cancel()
+        _ = await task.result
+        #expect(viewModel.state.errorMessage == nil)
+    }
+
     @Test func queryFiltersCaseInsensitively() async {
         let viewModel = ItemListViewModel { ["Alpha", "Beta", "Gamma"] }
         await viewModel.load()

@@ -20,8 +20,8 @@ IGNORE_REGEX='\.build|Tests|SwiftTemplateUI|SwiftTemplateUIDemo|SwiftTemplateExa
 swift test --enable-code-coverage --parallel
 
 BIN_PATH=$(swift build --show-bin-path)
-PROFDATA=$(find "$BIN_PATH" -name 'default.profdata' | head -1)
-TEST_BIN=$(find "$BIN_PATH" -name 'SwiftTemplatePackageTests' -type f | head -1)
+PROFDATA=$(find "$BIN_PATH" -name 'default.profdata' -print -quit)
+TEST_BIN=$(find "$BIN_PATH" -name 'SwiftTemplatePackageTests' -type f -print -quit)
 if [[ -z "$TEST_BIN" ]]; then
     TEST_BIN="$BIN_PATH/SwiftTemplatePackageTests.xctest/Contents/MacOS/SwiftTemplatePackageTests"
 fi
@@ -35,11 +35,13 @@ xcrun llvm-cov report \
     -instr-profile "$PROFDATA" \
     -ignore-filename-regex "$IGNORE_REGEX"
 
-COVERAGE=$(xcrun llvm-cov report \
+# Text report column 4 is *region* cover. Line cover comes from the JSON summary.
+COVERAGE=$(xcrun llvm-cov export \
     "$TEST_BIN" \
     -instr-profile "$PROFDATA" \
     -ignore-filename-regex "$IGNORE_REGEX" \
-    | grep -E '^TOTAL' | awk '{print $4}' | tr -d '%')
+    -summary-only \
+    | python3 -c 'import json,sys; print("%.2f" % json.load(sys.stdin)["data"][0]["totals"]["lines"]["percent"])')
 
 echo "Line coverage: ${COVERAGE}% (threshold: ${THRESHOLD}%)"
 if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then

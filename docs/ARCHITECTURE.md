@@ -7,13 +7,13 @@ This document describes the project structure, target relationships, and design 
 ```
 SwiftTemplate/
 ├── Package.swift                        # SPM manifest (swift-tools-version: 5.9)
-├── Package.resolved                     # Pinned dependency versions
 ├── Makefile                             # Build, test, and security scan shortcuts
 ├── .swiftlint.yml                       # SwiftLint configuration (security-focused)
 ├── .github/workflows/ci.yml             # CI: build, tests, coverage gate, SwiftLint
 ├── .github/workflows/security.yml       # CI: security scanning
 ├── scripts/
-│   └── security-scan.sh                 # Runs SwiftLint, audit, Periphery, Trivy
+│   ├── security-scan.sh                 # Runs SwiftLint, audit, Periphery, Trivy
+│   └── check-coverage.sh                # Tests + 80% line-coverage gate
 ├── Sources/
 │   ├── SwiftTemplate/                   # Main library target
 │   │   ├── SwiftTemplate.swift          # Module entry point (version constant)
@@ -26,6 +26,7 @@ SwiftTemplate/
 │   │   ├── HPC/                         # SIMD, Accelerate, parallel algorithms
 │   │   ├── Simulation/                  # Numerical integration, physics engines
 │   │   └── SwiftTemplate.docc/          # DocC catalog (articles, tutorials)
+│   ├── SwiftTemplateUI/                 # SwiftUI building blocks (Apple-only)
 │   ├── SwiftTemplateCLI/                # CLI executable target
 │   │   ├── SwiftTemplateCLI.swift       # Root command (AsyncParsableCommand)
 │   │   ├── GreetCommand.swift           # Subcommand: greet
@@ -35,11 +36,13 @@ SwiftTemplate/
 │   │   ├── PipeCommand.swift            # Subcommand: pipe
 │   │   ├── FormatCommand.swift          # Subcommand: format
 │   │   └── PlatformCommand.swift        # Subcommand: platform
+│   ├── SwiftTemplateUIDemo/             # macOS demo app for the UI target
 │   └── SwiftTemplateExample/            # Minimal example executable
 │       └── main.swift
 ├── Tests/
 │   ├── SwiftTemplateTests/              # Unit + integration tests for the library
-│   └── SwiftTemplateCLITests/           # Tests for CLI commands
+│   ├── SwiftTemplateCLITests/           # Tests for CLI commands
+│   └── SwiftTemplateUITests/            # View-model / pixel-bridge tests
 ├── docs/                                # Markdown guides (this directory)
 └── examples/                            # Standalone example files
 ```
@@ -80,10 +83,10 @@ SwiftTemplateCLITests
         ├── SwiftTemplate
         └── ArgumentParser
 
-SwiftTemplate
-└── (no target dependencies)
-    Plugins: SwiftLintBuildToolPlugin (SwiftLintPlugins 0.58+)
-    Build plugins: swift-docc-plugin 1.4.3+
+SwiftTemplate / SwiftTemplateUI
+└── (no extra target plugins on Linux)
+    Target plugins (macOS only): SwiftLintBuildToolPlugin (SwiftLintPlugins 0.58+)
+    Package command plugin (dependency): swift-docc-plugin 1.4.3+
 ```
 
 ### Platform Support
@@ -99,7 +102,7 @@ Declared in `Package.swift`:
 
 ## Module Architecture
 
-The `SwiftTemplate` library is organized into domain-specific subdirectories. Each subdirectory contains a single Swift file that demonstrates patterns for that domain.
+The `SwiftTemplate` library is organized into domain-specific subdirectories. Most domains are one Swift file; Concurrency is `Concurrency.swift` plus `Resilience.swift`.
 
 ```
 SwiftTemplate (library)
@@ -111,7 +114,7 @@ SwiftTemplate (library)
 │   └── ThirdPartyPatterns.swift   — External dependency abstractions
 │
 └── Domain Modules
-    ├── Concurrency/               — Async patterns, actors, structured concurrency
+    ├── Concurrency/               — Concurrency.swift + Resilience.swift (timeouts/retries)
     ├── Rendering/                 — GPU pipelines, 2D/3D graphics
     ├── Systems/                   — OS interfaces, file I/O, processes
     ├── HPC/                       — SIMD, Accelerate, parallel compute
@@ -154,14 +157,13 @@ with Xcode 16.2 (required for Swift Testing):
 
 **`ci.yml`**
 1. Builds the package (`swift build`)
-2. Runs tests with coverage (`swift test --enable-code-coverage --parallel`)
-3. Fails if line coverage over `Sources/` (Tests excluded) is below **80%**
-4. Runs `swiftlint lint --strict` — any violation fails the build
+2. Runs `./scripts/check-coverage.sh` (`swift test --enable-code-coverage --parallel` plus the 80% **line** coverage gate over the core library and CLI; Tests, SwiftTemplateUI, UIDemo, and Example are excluded)
+3. Runs `swiftlint lint --strict` — any violation fails the build
 
 **`security.yml`**
 1. Installs SwiftLint, Periphery, and Trivy; audits dependencies
 2. Builds, tests with coverage, and re-checks the 80% threshold
-3. Runs `scripts/security-scan.sh`, which invokes SwiftLint, swift-package-audit, the Xcode static analyzer, Periphery, and Trivy
+3. Runs `scripts/security-scan.sh`, which invokes SwiftLint, `swift package audit`, Periphery, and Trivy. `xcodebuild analyze` is skipped here (no Xcode project/scheme).
 
 See [SecurityScanningGuide.md](SecurityScanningGuide.md) for details on each tool.
 
@@ -171,7 +173,7 @@ See [SecurityScanningGuide.md](SecurityScanningGuide.md) for details on each too
 [TOOLCHAIN.md](TOOLCHAIN.md) · [EXTENDING.md](EXTENDING.md) · [TUTORIAL.md](TUTORIAL.md)
 
 **Module Guides:**
-[ConcurrencyGuide.md](ConcurrencyGuide.md) · [RenderingGuide.md](RenderingGuide.md) · [SystemsGuide.md](SystemsGuide.md) · [HPCGuide.md](HPCGuide.md) · [SimulationGuide.md](SimulationGuide.md)
+[ConcurrencyGuide.md](ConcurrencyGuide.md) · [RenderingGuide.md](RenderingGuide.md) · [SystemsGuide.md](SystemsGuide.md) · [HPCGuide.md](HPCGuide.md) · [SimulationGuide.md](SimulationGuide.md) · [UIGuide.md](UIGuide.md)
 
 **Reference:**
 [BestPractices.md](BestPractices.md) · [CLIGuide.md](CLIGuide.md) · [TestingGuide.md](TestingGuide.md) · [CrossPlatformGuide.md](CrossPlatformGuide.md) · [ThirdPartyGuide.md](ThirdPartyGuide.md) · [SecurityScanningGuide.md](SecurityScanningGuide.md) · [DocumentationGuide.md](DocumentationGuide.md)

@@ -143,6 +143,9 @@ public enum AccelerateOps {
     public static func matmul(
         a: [Float], b: [Float], m: Int, n: Int, k: Int
     ) -> [Float] {
+        precondition(m > 0 && n > 0 && k > 0, "matmul dimensions must be positive")
+        precondition(a.count == m * k, "a.count must equal m * k")
+        precondition(b.count == k * n, "b.count must equal k * n")
         var c = [Float](repeating: 0, count: m * n)
         // Note: cblas_sgemm deprecated in macOS 13.3 in favor of ILP64 variant.
         // Compile with -DACCELERATE_NEW_LAPACK for the updated headers.
@@ -174,13 +177,16 @@ public enum ParallelProcessing {
     ) -> [R] {
         let count = items.count
         guard count > 0 else { return [] }
+        // nonisolated(unsafe): each iteration initializes only its own index.
         nonisolated(unsafe) let results = UnsafeMutableBufferPointer<R>.allocate(capacity: count)
-        DispatchQueue.concurrentPerform(iterations: count) { i in
-            results[i] = transform(items[i])
+        defer {
+            results.deinitialize()
+            results.deallocate()
         }
-        let array = Array(results)
-        results.deallocate()
-        return array
+        DispatchQueue.concurrentPerform(iterations: count) { i in
+            results.initializeElement(at: i, to: transform(items[i]))
+        }
+        return Array(results)
     }
 
     /// Parallel reduce: split array into chunks, reduce each in parallel, then combine.
@@ -197,20 +203,24 @@ public enum ParallelProcessing {
         chunkSize: Int = 1024,
         combine: @Sendable (T, T) -> T
     ) -> T {
+        precondition(chunkSize > 0, "chunkSize must be at least 1")
         let count = items.count
         guard count > chunkSize else {
             return items.reduce(initial, combine)
         }
         let numChunks = (count + chunkSize - 1) / chunkSize
+        // nonisolated(unsafe): each iteration initializes only its own chunk slot.
         nonisolated(unsafe) let partials = UnsafeMutableBufferPointer<T>.allocate(capacity: numChunks)
+        defer {
+            partials.deinitialize()
+            partials.deallocate()
+        }
         DispatchQueue.concurrentPerform(iterations: numChunks) { chunk in
             let lo = chunk * chunkSize
             let hi = min(lo + chunkSize, count)
-            partials[chunk] = items[lo..<hi].reduce(initial, combine)
+            partials.initializeElement(at: chunk, to: items[lo..<hi].reduce(initial, combine))
         }
-        let result = Array(partials).reduce(initial, combine)
-        partials.deallocate()
-        return result
+        return Array(partials).reduce(initial, combine)
     }
 }
 
@@ -220,7 +230,10 @@ public enum ParallelProcessing {
 public enum MemoryOptimization {
 
     /// Page-aligned buffer for optimal I/O and SIMD access.
-    public final class AlignedBuffer<T>: @unchecked Sendable {
+    ///
+    /// `T` must be trivial / bitwise-copyable. `deinit` only deallocates;
+    /// it does not deinitialize stored elements.
+    public final class AlignedBuffer<T>: @unchecked Sendable { // callers synchronize access
         /// Raw pointer to the allocated memory.
         public let pointer: UnsafeMutablePointer<T>
         /// The number of elements the buffer can hold.

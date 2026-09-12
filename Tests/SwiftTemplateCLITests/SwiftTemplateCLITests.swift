@@ -160,6 +160,7 @@ struct RootCommandTests {
         }
         #expect(names.contains("greet"))
         #expect(names.contains("generate"))
+        #expect(names.contains("fetch"))
         #expect(names.contains("config"))
         #expect(names.contains("pipe"))
         #expect(names.contains("format"))

@@ -18,21 +18,33 @@ public protocol HTTPClient: Sendable {
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
+
+/// Holds the `URLSessionTask` so cancellation can race with start.
+private final class URLSessionTaskBox: @unchecked Sendable { // written on request task, read from cancel
+    var task: URLSessionTask?
+}
 #endif
 
 extension URLSession: HTTPClient {
     public func data(from url: URL) async throws -> (Data, URLResponse) {
         #if canImport(FoundationNetworking)
-        return try await withCheckedThrowingContinuation { cont in
-            dataTask(with: url) { d, r, e in
-                if let e {
-                    cont.resume(throwing: e)
-                } else if let d, let r {
-                    cont.resume(returning: (d, r))
-                } else {
-                    cont.resume(throwing: URLError(.badServerResponse))
+        let holder = URLSessionTaskBox()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { cont in
+                let task = dataTask(with: url) { d, r, e in
+                    if let e {
+                        cont.resume(throwing: e)
+                    } else if let d, let r {
+                        cont.resume(returning: (d, r))
+                    } else {
+                        cont.resume(throwing: URLError(.badServerResponse))
+                    }
                 }
-            }.resume()
+                holder.task = task
+                task.resume()
+            }
+        } onCancel: {
+            holder.task?.cancel()
         }
         #else
         return try await self.data(from: url, delegate: nil)
@@ -181,10 +193,14 @@ public struct APIService: Sendable {
     ///
     /// - Parameter url: The URL to fetch.
     /// - Returns: The deserialized JSON object.
-    /// - Throws: Network errors or `JSONSerialization` errors.
+    /// - Throws: ``APIError/badStatus(_:)`` on non-2xx responses, network errors,
+    ///   or `JSONSerialization` errors.
     public func fetchJSON(from url: URL) async throws -> Any {
         deps.logger.log(.info, "GET \(url)")
-        let (data, _) = try await deps.http.data(from: url)
+        let (data, response) = try await deps.http.data(from: url)
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            throw APIError.badStatus(http.statusCode)
+        }
         return try JSONSerialization.jsonObject(with: data)
     }
 }

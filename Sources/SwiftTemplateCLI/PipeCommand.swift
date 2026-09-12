@@ -8,9 +8,9 @@ struct PipeCommand: ParsableCommand {
         abstract: "Transform text from stdin and write to stdout.",
         discussion: """
         Usage examples:
-          echo "hello world" | swift-template pipe --uppercase
-          cat file.txt | swift-template pipe --line-numbers
-          swift-template pipe --lowercase < input.txt > output.txt
+          echo "hello world" | swift-template pipe --transform uppercase
+          cat file.txt | swift-template pipe --transform line-numbers
+          swift-template pipe --transform lowercase < input.txt > output.txt
         """
     )
 

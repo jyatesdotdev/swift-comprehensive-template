@@ -93,6 +93,7 @@ public enum Integrator {
     public static func trapezoid(
         from a: Double, to b: Double, steps: Int, f: (Double) -> Double
     ) -> Double {
+        precondition(steps > 0, "steps must be at least 1")
         let h = (b - a) / Double(steps)
         var sum = (f(a) + f(b)) * 0.5
         for i in 1..<steps { sum += f(a + Double(i) * h) }
@@ -214,7 +215,7 @@ public struct ParticleSystem: Sendable {
     }
 }
 
-/// Spring connecting two particle indices with damping.
+/// Spring connecting two particle indices via position-based relaxation.
 public struct Spring: Sendable {
     /// Index of the first particle.
     public let a: Int
@@ -222,19 +223,18 @@ public struct Spring: Sendable {
     public let b: Int
     /// The natural length of the spring.
     public let restLength: Double
-    /// Spring stiffness coefficient.
-    public let stiffness: Double
 
     /// Creates a spring constraint between two particles.
+    ///
+    /// Stiffness comes from iterating ``apply(to:)`` rather than a gain term.
     ///
     /// - Parameters:
     ///   - a: Index of the first particle.
     ///   - b: Index of the second particle.
     ///   - restLength: The natural length of the spring.
-    ///   - stiffness: Spring stiffness. Defaults to `100.0`.
-    public init(a: Int, b: Int, restLength: Double, stiffness: Double = 100.0) {
+    public init(a: Int, b: Int, restLength: Double) {
         self.a = a; self.b = b
-        self.restLength = restLength; self.stiffness = stiffness
+        self.restLength = restLength
     }
 
     /// Applies position-based constraint relaxation to the given particles.

@@ -8,10 +8,10 @@ Required and optional tools for building, testing, linting, and scanning the Swi
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| **Swift** | 5.9+ | Build, test, run (`swift-tools-version: 5.9`) |
-| **Xcode** | 15+ | Apple platform builds, static analyzer (macOS only) |
+| **Swift** | 5.9+ to **build**; 6.x to **test** (`swift-tools-version: 5.9`, Swift Testing needs 6) |
+| **Xcode** | 16.2+ | Tests, Apple platform builds, static analyzer (macOS only) |
 | **SwiftLint** | 0.58+ | Security-focused linting (also runs via SPM build plugin) |
-| **swift-package-audit** | latest | Checks `Package.resolved` against vulnerability databases |
+| **`swift package audit`** | Swift 6.1+ | Checks resolved pins against vulnerability databases |
 | **Periphery** | latest | Dead code detection |
 | **Trivy** | latest | Dependency & filesystem vulnerability scanning |
 
@@ -42,19 +42,16 @@ xcode-select --install   # command-line tools (if Xcode is not installed)
 brew install swiftlint
 brew install peripheryapp/periphery/periphery
 brew install trivy
-
-# swift-package-audit (requires Node.js)
-npm install -g swift-package-audit
 ```
 
 Verify:
 
 ```bash
-swift --version          # Swift version 5.9 or later
+swift --version          # Swift 5.9+ to build; 6.x to test
 swiftlint version        # 0.58.0 or later
 periphery version
 trivy --version
-swift-package-audit --version
+swift package audit      # Swift 6.1+; older toolchains skip
 ```
 
 ## Installation — Linux (Ubuntu 22.04+)
@@ -62,10 +59,10 @@ swift-package-audit --version
 ```bash
 # Swift — use swiftlang.org or the setup-swift GitHub Action
 # See https://www.swift.org/install/linux/
-# Example for Ubuntu 22.04:
-wget https://download.swift.org/swift-5.9-release/ubuntu2204/swift-5.9-RELEASE/swift-5.9-RELEASE-ubuntu22.04.tar.gz
-tar xzf swift-5.9-RELEASE-ubuntu22.04.tar.gz
-export PATH="$(pwd)/swift-5.9-RELEASE-ubuntu22.04/usr/bin:$PATH"
+# Example for Ubuntu 22.04 (6.x toolchain required to run tests):
+wget https://download.swift.org/swift-6.0.3-release/ubuntu2204/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE-ubuntu22.04.tar.gz
+tar xzf swift-6.0.3-RELEASE-ubuntu22.04.tar.gz
+export PATH="$(pwd)/swift-6.0.3-RELEASE-ubuntu22.04/usr/bin:$PATH"
 
 # Trivy
 sudo apt-get install -y wget apt-transport-https gnupg
@@ -74,9 +71,6 @@ wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key \
 echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" \
   | sudo tee /etc/apt/sources.list.d/trivy.list
 sudo apt-get update && sudo apt-get install -y trivy
-
-# swift-package-audit (requires Node.js)
-npm install -g swift-package-audit
 ```
 
 > **Note:** SwiftLint, Periphery, and `xcodebuild analyze` are macOS-only. On Linux, the security scan gracefully skips them.
@@ -87,7 +81,7 @@ npm install -g swift-package-audit
 |------|-------|-------|
 | Swift compiler | ✅ | ✅ |
 | SwiftLint | ✅ | ❌ (skipped) |
-| swift-package-audit | ✅ | ✅ |
+| `swift package audit` | ✅ (6.1+) | ✅ (6.1+) |
 | xcodebuild analyze | ✅ | ❌ (skipped) |
 | Periphery | ✅ | ❌ (skipped) |
 | Trivy | ✅ | ✅ |
@@ -126,10 +120,7 @@ Any editor with LSP support works with SourceKit-LSP. Ensure `sourcekit-lsp` is 
 
 ## CI Integration
 
-The GitHub Actions workflow (`.github/workflows/security.yml`) installs all tools automatically:
-
-- **macOS runner (macos-14):** All tools available — full scan.
-- **Linux runner (ubuntu-latest):** Swift (via `setup-swift`), Trivy, swift-package-audit. macOS-only tools are skipped.
+The GitHub Actions workflow (`.github/workflows/security.yml`) installs tools on **macos-14** (Xcode 16.2) and runs the full scan there. There is no Linux CI runner; Linux tool notes below are for local use.
 
 See [SecurityScanningGuide.md](SecurityScanningGuide.md) for details on CI behavior and failure modes.
 
@@ -141,7 +132,7 @@ make test        # swift test
 make clean       # swift package clean
 make security    # Run all security scans
 make lint        # SwiftLint only
-make audit       # swift-package-audit only
+make audit       # swift package audit only
 make analyze     # xcodebuild analyze (macOS only)
 make periphery   # Dead code detection
 make trivy       # Trivy filesystem scan

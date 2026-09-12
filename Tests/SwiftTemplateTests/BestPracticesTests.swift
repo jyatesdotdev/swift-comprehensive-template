@@ -14,7 +14,7 @@ struct BestPracticesTests {
     }
 
     @Test func cowBufferAppendAndCopy() {
-        var a = COWBuffer([1, 2, 3])
+        let a = COWBuffer([1, 2, 3])
         var b = a
         b[0] = 99
         #expect(a[0] == 1, "Original unchanged after COW copy")

@@ -32,6 +32,7 @@ struct DemoRootView: View {
 
 /// Demonstrates ItemListViewModel + AsyncContentView + the component library.
 struct ComponentsDemo: View {
+    @State private var loadGeneration = 0
     @State private var viewModel = ItemListViewModel {
         // Simulated data source latency so the loading phase is visible.
         try await Task.sleep(for: .milliseconds(600))
@@ -50,7 +51,7 @@ struct ComponentsDemo: View {
             }
             HStack {
                 Button("Reload") {
-                    Task { await viewModel.load() }
+                    loadGeneration += 1
                 }
                 .buttonStyle(.primary)
                 if viewModel.state.isLoading {
@@ -60,7 +61,7 @@ struct ComponentsDemo: View {
         }
         .card()
         .padding()
-        .task { await viewModel.load() }
+        .task(id: loadGeneration) { await viewModel.load() }
     }
 }
 #else

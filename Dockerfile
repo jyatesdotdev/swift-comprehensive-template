@@ -8,8 +8,9 @@ FROM swift:5.10-jammy AS build
 
 WORKDIR /build
 
-# Layer cache: resolve dependencies before copying source
-COPY Package.swift Package.resolved ./
+# Layer cache: resolve dependencies before copying source.
+# Package.resolved is gitignored, so resolve from Package.swift alone.
+COPY Package.swift ./
 RUN swift package resolve
 
 # Copy source and build

@@ -23,7 +23,8 @@ new material goes in the section matching its abstraction level.
   Never assume TaskGroup completion order.
 - **Bounded concurrency**: seed `maxConcurrency` tasks, add one as each
   completes — see `throttledMap`. Don't spawn unbounded task counts.
-- **First-wins racing**: `group.next()` then `group.cancelAll()` — see `race`.
+- **First-completed racing**: `group.next()` then `group.cancelAll()` — see `race`.
+  The first finish wins even if it is an error; this is not first-success.
 - **Preallocated result slots for GCD fan-out**: `parallelBatch` writes each
   index from exactly one task into an `UnsafeMutablePointer`, justified with an
   inline comment:

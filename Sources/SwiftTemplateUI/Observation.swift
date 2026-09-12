@@ -83,10 +83,16 @@ public final class ItemListViewModel {
     }
 
     /// Runs the loader, transitioning through ``LoadState`` phases.
+    ///
+    /// ``CancellationError`` is not a load failure: a cancelled in-flight
+    /// reload must not overwrite a newer ``LoadState/loaded(_:)`` (or leave
+    /// a stale ``LoadState/failed(_:)``) when SwiftUI replaces `.task(id:)`.
     public func load() async {
         state = .loading
         do {
             state = .loaded(try await loadItems())
+        } catch is CancellationError {
+            return
         } catch {
             state = .failed(String(describing: error))
         }

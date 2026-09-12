@@ -12,8 +12,8 @@ A hands-on walkthrough for new developers — from cloning to shipping a feature
 
 | Tool | Minimum Version | Install |
 |------|----------------|---------|
-| Swift | 5.9+ | Bundled with Xcode or [swift.org/install](https://swift.org/install) |
-| Xcode | 15+ (macOS only) | Mac App Store |
+| Swift | 5.9+ to build; 6.x to test | Bundled with Xcode or [swift.org/install](https://swift.org/install) |
+| Xcode | 16.2+ (macOS only, for tests) | Mac App Store |
 | SwiftLint | 0.58+ | `brew install swiftlint` |
 
 Verify your setup:
@@ -35,13 +35,15 @@ cd SwiftTemplate
 swift build
 ```
 
-The first build fetches SPM dependencies (swift-argument-parser, swift-docc-plugin, SwiftLintPlugins) and compiles three products:
+The first build fetches SPM dependencies (swift-argument-parser, swift-docc-plugin, SwiftLintPlugins) and compiles five products:
 
 | Product | Type | Description |
 |---------|------|-------------|
 | `SwiftTemplate` | Library | Core modules (Concurrency, Rendering, Systems, HPC, Simulation) |
+| `SwiftTemplateUI` | Library | SwiftUI building blocks (Apple platforms) |
 | `SwiftTemplateExample` | Executable | Minimal demo of library usage |
 | `SwiftTemplateCLI` | Executable | Full CLI with subcommands via ArgumentParser |
+| `SwiftTemplateUIDemo` | Executable | macOS demo app for the UI target |
 
 ## 3. Run the Example
 
@@ -90,10 +92,11 @@ swift test --filter SwiftTemplateTests
 swift test --filter SwiftTemplateCLITests
 ```
 
-The project has two test targets:
+The project has three test targets:
 
 - `SwiftTemplateTests` — unit, performance, and integration tests for the library
 - `SwiftTemplateCLITests` — tests for CLI commands
+- `SwiftTemplateUITests` — view-model and pixel-bridge tests for the UI target
 
 ## 6. Run Linters
 
@@ -116,7 +119,7 @@ SwiftLint also runs automatically during `swift build` for the `SwiftTemplate` t
 make security
 
 # Or run individual tools
-make audit      # swift-package-audit — dependency vulnerabilities
+make audit      # swift package audit — dependency vulnerabilities
 make analyze    # Xcode static analyzer (macOS only)
 make periphery  # Dead code detection
 make trivy      # Filesystem/dependency vulnerability scan
@@ -151,7 +154,7 @@ No changes to `Package.swift` needed — SPM auto-discovers files in existing ta
 
 ### Step 2 — Add a test
 
-Add to `Tests/SwiftTemplateTests/SwiftTemplateTests.swift` (or create a new file in that directory):
+Create `Tests/SwiftTemplateTests/MathUtilsTests.swift` (or add to an existing suite file in that directory):
 
 ```swift
 import Testing

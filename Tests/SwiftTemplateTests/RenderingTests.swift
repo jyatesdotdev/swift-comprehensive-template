@@ -124,6 +124,15 @@ struct CoreGraphicsRenderingTests {
         )
         #expect(img != nil)
     }
+
+    @Test func drawCheckerboardZeroTileSize() {
+        let img = CoreGraphicsRendering.drawCheckerboard(
+            width: 40, height: 40, tileSize: 0,
+            color1: CGColor(red: 1, green: 1, blue: 1, alpha: 1),
+            color2: CGColor(red: 0, green: 0, blue: 0, alpha: 1)
+        )
+        #expect(img == nil)
+    }
 }
 #endif
 

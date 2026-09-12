@@ -77,11 +77,17 @@ run_analyze() {
     fi
     if ! has_tool xcodebuild; then return; fi
     local log
+    local status=0
     log=$(xcodebuild analyze \
         -scheme SwiftTemplate \
         -destination 'platform=macOS' \
         -quiet \
-        COMPILER_INDEX_STORE_ENABLE=NO 2>&1) || true
+        COMPILER_INDEX_STORE_ENABLE=NO 2>&1) || status=$?
+    if [[ $status -ne 0 ]]; then
+        echo "⚠️  xcodebuild analyze failed (no Xcode scheme/project?) — skipping"
+        SKIPPED=$((SKIPPED + 1))
+        return
+    fi
     if echo "$log" | grep -q "warning: .*analyzer"; then
         echo "❌ Static analyzer found issues"
         echo "$log" | grep "warning: .*analyzer"

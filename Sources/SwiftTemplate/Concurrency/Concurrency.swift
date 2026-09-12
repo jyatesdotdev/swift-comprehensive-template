@@ -53,7 +53,7 @@ public enum GCDPatterns {
     }
 
     /// Reader-writer pattern using a concurrent queue with barrier writes.
-    public final class ReadWriteLock<Value: Sendable>: @unchecked Sendable {
+    public final class ReadWriteLock<Value: Sendable>: @unchecked Sendable { // queue + barrier serializes access
         private var _value: Value
         private let queue = DispatchQueue(label: "com.template.rwlock", attributes: .concurrent)
 
@@ -113,13 +113,19 @@ public enum AsyncPatterns {
     /// - Returns: An `AsyncStream` yielding integers from `n` down to `0`.
     public static func countdown(from n: Int) -> AsyncStream<Int> {
         AsyncStream { continuation in
-            Task {
+            let task = Task {
                 for i in stride(from: n, through: 0, by: -1) {
+                    if Task.isCancelled { break }
                     continuation.yield(i)
-                    try? await Task.sleep(for: .milliseconds(100))
+                    do {
+                        try await Task.sleep(for: .milliseconds(100))
+                    } catch {
+                        break
+                    }
                 }
                 continuation.finish()
             }
+            continuation.onTermination = { _ in task.cancel() }
         }
     }
 }
@@ -182,6 +188,8 @@ public actor Cache<Key: Hashable & Sendable, Value: Sendable> {
     public func getOrSet(_ key: Key, default provider: @Sendable () async -> Value) async -> Value {
         if let existing = storage[key] { return existing }
         let value = await provider()
+        // Re-check after `await`: another task may have stored a winner while we were suspended.
+        if let winner = storage[key] { return winner }
         storage[key] = value
         return value
     }
@@ -216,11 +224,16 @@ public enum StructuredConcurrency {
         }
     }
 
-    /// Runs multiple tasks concurrently and returns the first successful result.
+    /// Runs multiple tasks concurrently and returns the first completed result.
+    ///
+    /// Completes with the first task to finish, whether that finish is a success
+    /// or a thrown error, then cancels the rest. This is first-completed racing,
+    /// not first-success (`Promise.any`) racing.
     ///
     /// - Parameter tasks: An array of async throwing closures to race.
-    /// - Returns: The result of the first task to complete successfully.
-    /// - Throws: `CancellationError` if no tasks are provided, or rethrows task errors.
+    /// - Returns: The result of the first task to complete.
+    /// - Throws: `CancellationError` if no tasks are provided, or the first
+    ///   completed task's error.
     public static func race<R: Sendable>(
         _ tasks: [@Sendable () async throws -> R]
     ) async throws -> R {
@@ -248,7 +261,8 @@ public enum StructuredConcurrency {
         maxConcurrency: Int,
         transform: @Sendable @escaping (T) async throws -> R
     ) async rethrows -> [R] {
-        try await withThrowingTaskGroup(of: (Int, R).self) { group in
+        precondition(maxConcurrency >= 1, "maxConcurrency must be at least 1")
+        return try await withThrowingTaskGroup(of: (Int, R).self) { group in
             var results = [(Int, R)]()
             results.reserveCapacity(items.count)
             var index = 0

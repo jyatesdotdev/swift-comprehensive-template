@@ -75,7 +75,7 @@ let results = await StructuredConcurrency.parallelMap([1,2,3]) { $0 * 2 }
 ```
 
 ### Race
-Returns the first successful result, cancels the rest:
+Returns the first completed result (success or failure), then cancels the rest:
 ```swift
 let fastest = try await StructuredConcurrency.race([
     { try await fetchFromCDN() },

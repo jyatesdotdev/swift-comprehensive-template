@@ -19,11 +19,11 @@ most safety-critical code in the repo — read the constraints below before edit
 - **Typed, contextual errors**: `FileSystem.FSError` carries the path in every
   case, wraps underlying errors (`ioError(String, underlying: Error)`), and is
   `CustomStringConvertible`. New failure modes extend this enum.
-- **Precheck-then-act** file APIs: check `fileExists` and throw `.notFound`
-  rather than letting Foundation throw an opaque `NSError`.
+- **Read, then classify**: `readData` / `readChunked` open or read first and map
+  failure onto ``FileSystem/FSError`` (not exists-then-act).
 - **Atomic writes**: write to a `UUID`-named temp file in the *same directory*,
-  then rename (`atomicWrite`). Same-directory matters — cross-volume moves
-  aren't atomic.
+  then `replaceItemAt` if the dest exists or `moveItem` if not. Never unlink
+  the destination first. Same-directory matters — cross-volume moves aren't atomic.
 - **Resource cleanup with `defer`**: `defer { handle.closeFile() }` immediately
   after acquiring; `defer { ptr.deallocate() }` immediately after `allocate`.
 - **Scoped unsafe access**: `UnsafeMemory.withManualBuffer` owns

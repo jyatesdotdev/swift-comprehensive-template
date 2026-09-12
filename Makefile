@@ -6,7 +6,7 @@ build:
 test:
 	swift test
 
-# Everything CI checks, in one command: build, tests, strict lint.
+# Build, tests, and strict lint. CI also runs `./scripts/check-coverage.sh` (same as `make coverage`).
 verify:
 	swift build
 	swift test

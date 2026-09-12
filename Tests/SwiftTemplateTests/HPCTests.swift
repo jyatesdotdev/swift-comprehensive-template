@@ -56,6 +56,7 @@ struct HPCTests {
 @Suite("HPCExtended")
 struct HPCExtendedTests {
 
+#if canImport(Accelerate)
     @Test func accelerateVectorAdd() {
         let r = AccelerateOps.vectorAdd([1, 2, 3], [4, 5, 6])
         #expect(r == [5, 7, 9])
@@ -79,6 +80,7 @@ struct HPCExtendedTests {
         let c = AccelerateOps.matmul(a: a, b: b, m: 2, n: 2, k: 2)
         #expect(c == [1, 2, 3, 4])
     }
+#endif
 
     @Test func measure() {
         let result = MemoryOptimization.measure("") { 42 }

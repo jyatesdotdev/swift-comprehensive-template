@@ -31,15 +31,44 @@ struct ConcurrencyTests {
         #expect(val2 == 42, "Should return cached value")
     }
 
-    @Test func parallelMap() async throws {
+    @Test func cacheGetOrSetDoesNotClobberWinner() async {
+        let cache = Cache<String, Int>()
+        actor PairGate {
+            private var waiting: [CheckedContinuation<Void, Never>] = []
+            func arrive() async {
+                await withCheckedContinuation { cont in
+                    waiting.append(cont)
+                    if waiting.count == 2 {
+                        for item in waiting { item.resume() }
+                        waiting.removeAll()
+                    }
+                }
+            }
+        }
+        let gate = PairGate()
+        async let first = cache.getOrSet("k") {
+            await gate.arrive()
+            return 1
+        }
+        async let second = cache.getOrSet("k") {
+            await gate.arrive()
+            return 2
+        }
+        let a = await first
+        let b = await second
+        #expect(a == b)
+        #expect(await cache.get("k") == a)
+    }
+
+    @Test func parallelMap() async {
         let input = Array(1...10)
-        let result = try await StructuredConcurrency.parallelMap(input) { $0 * $0 }
+        let result = await StructuredConcurrency.parallelMap(input) { $0 * $0 }
         #expect(result == input.map { $0 * $0 })
     }
 
-    @Test func throttledMap() async throws {
+    @Test func throttledMap() async {
         let input = Array(1...20)
-        let result = try await StructuredConcurrency.throttledMap(input, maxConcurrency: 4) { $0 + 1 }
+        let result = await StructuredConcurrency.throttledMap(input, maxConcurrency: 4) { $0 + 1 }
         #expect(result == input.map { $0 + 1 })
     }
 }
@@ -52,8 +81,12 @@ struct ConcurrencyExtendedTests {
     @Test func readWriteLock() async {
         let lock = GCDPatterns.ReadWriteLock(0)
         #expect(lock.read() == 0)
-        lock.write { $0 = 42 }
-        try? await Task.sleep(for: .milliseconds(50))
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            lock.write {
+                $0 = 42
+                cont.resume()
+            }
+        }
         #expect(lock.read() == 42)
     }
 
@@ -78,6 +111,16 @@ struct ConcurrencyExtendedTests {
             values.append(v)
         }
         #expect(values == [3, 2, 1, 0])
+    }
+
+    @Test func countdownStopsOnCancel() async {
+        let stream = AsyncPatterns.countdown(from: 10_000)
+        var seen = 0
+        for await _ in stream {
+            seen += 1
+            break
+        }
+        #expect(seen == 1)
     }
 
     @Test func race() async throws {

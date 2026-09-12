@@ -189,6 +189,7 @@ public enum CoreGraphicsRendering {
         tileSize: Int,
         color1: CGColor, color2: CGColor
     ) -> CGImage? {
+        guard tileSize > 0 else { return nil }
         guard let ctx = makeContext(width: width, height: height) else { return nil }
         for row in 0..<(height / tileSize) {
             for col in 0..<(width / tileSize) {

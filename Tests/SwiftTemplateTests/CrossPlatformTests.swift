@@ -8,11 +8,21 @@ import Foundation
 struct CrossPlatformTests {
 
     @Test func platformCurrent() {
+        #if os(macOS)
         #expect(Platform.current == .macOS)
+        #elseif os(Linux)
+        #expect(Platform.current == .linux)
+        #else
+        #expect(Platform.current != .unknown)
+        #endif
     }
 
     @Test func platformIsApple() {
-        #expect(Platform.isApple == true)
+        #if canImport(Darwin)
+        #expect(Platform.isApple)
+        #else
+        #expect(!Platform.isApple)
+        #endif
     }
 
     @Test func platformArchitecture() {
@@ -68,7 +78,15 @@ struct CrossPlatformTests {
     @Test func httpErrorCases() {
         let e1 = PortableHTTP.HTTPError.badStatus(404)
         let e2 = PortableHTTP.HTTPError.noData
-        #expect(e1 is Error)
-        #expect(e2 is Error)
+        if case .badStatus(let code) = e1 {
+            #expect(code == 404)
+        } else {
+            #expect(Bool(false), "expected badStatus")
+        }
+        if case .noData = e2 {
+            #expect(Bool(true))
+        } else {
+            #expect(Bool(false), "expected noData")
+        }
     }
 }

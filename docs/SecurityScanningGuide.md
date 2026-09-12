@@ -10,7 +10,7 @@ make security
 
 # Run a single tool
 make lint        # SwiftLint
-make audit       # swift-package-audit
+make audit       # swift package audit
 make analyze     # xcodebuild analyze (macOS only)
 make periphery   # dead code detection
 make trivy       # dependency/filesystem scan
@@ -45,17 +45,15 @@ SwiftLint also runs automatically during `swift build` via the SPM build tool pl
 
 **Install:** `brew install swiftlint`
 
-### 2. swift-package-audit — Dependency Vulnerabilities
+### 2. `swift package audit` — Dependency Vulnerabilities
 
-Checks `Package.resolved` against known vulnerability databases. Any finding fails the scan.
+SwiftPM subcommand (Swift 6.1+). Checks resolved pins against known vulnerability databases. Any finding fails the scan. Older toolchains skip with a warning (`Unknown subcommand`).
 
-**Install:** `npm install -g swift-package-audit`
+**Install:** ships with the Swift toolchain — no npm package.
 
 ### 3. Xcode Static Analyzer (macOS only)
 
-Runs `xcodebuild analyze` to detect memory issues, logic errors, and API misuse. Automatically skipped on Linux.
-
-**Requires:** Xcode (pre-installed on macOS CI runners)
+Runs `xcodebuild analyze` when an Xcode scheme exists. This repo is SPM-only (no `.xcodeproj`), so `security-scan.sh` skips analyze when `xcodebuild` exits non-zero. Automatically skipped on Linux.
 
 ### 4. Periphery — Dead Code Detection
 
@@ -79,8 +77,7 @@ The GitHub Actions workflow (`.github/workflows/security.yml`) runs on every pus
 
 | Runner | Tools Run |
 |--------|-----------|
-| macOS (macos-14) | All five tools |
-| Linux (ubuntu-latest) | swift-package-audit, Trivy (others skipped) |
+| macOS (macos-14) | SwiftLint, `swift package audit` (if available), Periphery, Trivy; analyze skipped (no Xcode scheme) |
 
 **Security gate:** The workflow fails if `security-scan.sh` exits non-zero, which happens when any tool (except Periphery) reports findings.
 
@@ -89,10 +86,10 @@ The GitHub Actions workflow (`.github/workflows/security.yml`) runs on every pus
 | Tool | Fail CI? | Platform |
 |------|----------|----------|
 | SwiftLint | Yes (on errors) | macOS |
-| swift-package-audit | Yes | macOS, Linux |
-| xcodebuild analyze | Yes | macOS only |
+| `swift package audit` | Yes (skipped if unsupported) | macOS, Linux (local) |
+| xcodebuild analyze | Yes if it runs; skipped without a scheme | macOS only |
 | Periphery | No (warnings only) | macOS |
-| Trivy | Yes (HIGH/CRITICAL) | macOS, Linux |
+| Trivy | Yes (HIGH/CRITICAL) | macOS, Linux (local) |
 
 Missing tools are gracefully skipped with a warning — the scan does not fail because a tool is absent.
 

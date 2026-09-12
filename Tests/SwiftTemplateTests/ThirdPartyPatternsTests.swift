@@ -51,6 +51,14 @@ struct ThirdPartyPatternsTests {
         #expect(payload == Payload(key: "value"))
     }
 
+    @Test func fetchJSONThrowsOnBadStatus() async throws {
+        let mock = MockHTTPClient.returning(Data("{}".utf8), statusCode: 500)
+        let url = try #require(URL(string: "https://example.com"))
+        await #expect(throws: APIError.badStatus(500)) {
+            _ = try await service(mock: mock).fetchJSON(from: url)
+        }
+    }
+
     @Test func typedFetchThrowsOnBadStatus() async throws {
         let mock = MockHTTPClient.returning(Data(), statusCode: 500)
         let url = try #require(URL(string: "https://example.com"))

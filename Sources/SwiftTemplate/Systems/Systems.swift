@@ -38,9 +38,9 @@ public enum FileSystem {
     /// - Returns: The file contents.
     /// - Throws: ``FSError/notFound(_:)`` or ``FSError/permissionDenied(_:)``.
     public static func readData(at path: String) throws -> Data {
-        guard fm.fileExists(atPath: path) else { throw FSError.notFound(path) }
-        guard let data = fm.contents(atPath: path) else { throw FSError.permissionDenied(path) }
-        return data
+        if let data = fm.contents(atPath: path) { return data }
+        if fm.fileExists(atPath: path) { throw FSError.permissionDenied(path) }
+        throw FSError.notFound(path)
     }
 
     /// Reads a file as a UTF-8 string.
@@ -118,11 +118,21 @@ public enum FileSystem {
     ///   - path: The destination file path.
     /// - Throws: File system errors on write or rename failure.
     public static func atomicWrite(_ data: Data, to path: String) throws {
-        let dir = URL(fileURLWithPath: path).deletingLastPathComponent()
+        let dest = URL(fileURLWithPath: path)
+        let dir = dest.deletingLastPathComponent()
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         let tmp = dir.appendingPathComponent(UUID().uuidString)
-        try data.write(to: tmp, options: .atomic)
-        if fm.fileExists(atPath: path) { try fm.removeItem(atPath: path) }
-        try fm.moveItem(at: tmp, to: URL(fileURLWithPath: path))
+        do {
+            try data.write(to: tmp)
+            if fm.fileExists(atPath: path) {
+                _ = try fm.replaceItemAt(dest, withItemAt: tmp)
+            } else {
+                try fm.moveItem(at: tmp, to: dest)
+            }
+        } catch {
+            try? fm.removeItem(at: tmp)
+            throw FSError.ioError(path, underlying: error)
+        }
     }
 }
 
@@ -215,8 +225,7 @@ public enum Shell {
             return RunResult(exitCode: -1, stdout: "", stderr: error.localizedDescription)
         }
 
-        // nonisolated(unsafe): the handle is read from exactly one thread.
-        nonisolated(unsafe) let outHandle = outPipe.fileHandleForReading
+        let outHandle = outPipe.fileHandleForReading
         let outBox = DataBox()
         let group = DispatchGroup()
         group.enter()
@@ -234,6 +243,9 @@ public enum Shell {
     }
 
     /// Runs a shell expression via `/bin/sh -c`.
+    ///
+    /// - Warning: Interpolating untrusted input into `expression` is command
+    ///   injection. Prefer ``run(_:arguments:)`` with a fixed executable and argv.
     ///
     /// - Parameter expression: The shell command string.
     /// - Returns: A ``RunResult`` with exit code and captured output.
@@ -274,9 +286,6 @@ public enum StreamIO {
         chunkSize: Int = 64 * 1024,
         handler: (Data) throws -> Void
     ) throws {
-        guard FileManager.default.fileExists(atPath: path) else {
-            throw FileSystem.FSError.notFound(path)
-        }
         guard let handle = FileHandle(forReadingAtPath: path) else {
             throw FileSystem.FSError.notFound(path)
         }
@@ -304,6 +313,9 @@ public enum UnsafeMemory {
 
     /// Allocates a temporary buffer, passes it to `body`, then deallocates.
     ///
+    /// `body` must initialize every slot before reading. `T` should be trivial;
+    /// this helper only deallocates — it does not deinitialize.
+    ///
     /// - Parameters:
     ///   - type: The element type.
     ///   - count: Number of elements to allocate.
@@ -327,8 +339,17 @@ public enum UnsafeMemory {
     /// - Returns: An array of the target type.
     public static func reinterpret<S, D>(_ source: [S], as _: D.Type) -> [D] {
         source.withUnsafeBytes { raw in
-            let count = raw.count / MemoryLayout<D>.stride
-            return Array(raw.bindMemory(to: D.self).prefix(count))
+            let stride = MemoryLayout<D>.stride
+            guard stride > 0, let src = raw.baseAddress else { return [] }
+            let count = raw.count / stride
+            return [D](unsafeUninitializedCapacity: count) { dest, n in
+                guard let destBase = dest.baseAddress else {
+                    n = 0
+                    return
+                }
+                UnsafeMutableRawPointer(destBase).copyMemory(from: src, byteCount: count * stride)
+                n = count
+            }
         }
     }
 
