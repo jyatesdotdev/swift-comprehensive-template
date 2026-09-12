@@ -47,6 +47,7 @@ jobs:
             -scheme SwiftTemplate-Package \
             -destination 'platform=macOS' \
             -skipPackagePluginValidation \
+            -enableCodeCoverage NO \
             CODE_SIGNING_ALLOWED=NO
 
   lint:
