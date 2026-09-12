@@ -25,7 +25,7 @@ public enum GCDPatterns {
     /// - Parameters:
     ///   - items: The integers to transform in parallel.
     ///   - transform: A sendable closure applied to each item.
-    ///   - completion: Called on the main queue with the ordered results.
+    ///   - completion: Called on ``concurrentQueue`` with the ordered results.
     public static func parallelBatch(
         items: [Int],
         transform: @Sendable @escaping (Int) -> Int,
@@ -45,7 +45,7 @@ public enum GCDPatterns {
             }
         }
 
-        group.notify(queue: .main) {
+        group.notify(queue: concurrentQueue) {
             let results = Array(UnsafeBufferPointer(start: base, count: count))
             base.deallocate()
             completion(results)

@@ -48,6 +48,7 @@ jobs:
             -destination 'platform=macOS' \
             -skipPackagePluginValidation \
             -enableCodeCoverage NO \
+            -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO
 
   lint:
