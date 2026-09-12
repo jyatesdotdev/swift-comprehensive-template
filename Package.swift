@@ -3,9 +3,14 @@
 import PackageDescription
 
 #if os(macOS)
-let swiftTemplatePlugins: [Target.PluginUsage] = [
-    .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
-]
+import Darwin
+// GitHub Actions sets CI=true. Newer SwiftPM rejects SwiftLint's build-tool
+// plugin ("prebuild command cannot use executables built from source").
+// CI already runs `swiftlint lint --strict` as its own job.
+let swiftTemplatePlugins: [Target.PluginUsage] =
+    getenv("CI") == nil
+    ? [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
+    : []
 #else
 let swiftTemplatePlugins: [Target.PluginUsage] = []
 #endif
